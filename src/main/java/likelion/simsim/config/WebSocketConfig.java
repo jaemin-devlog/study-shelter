@@ -15,6 +15,13 @@ import org.springframework.web.socket.config.annotation.WebSocketTransportRegist
 @EnableWebSocketMessageBroker
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
+    private static final String[] ALLOWED_ORIGIN_PATTERNS = {
+            "https://likelion.cloud",
+            "https://www.likelion.cloud",
+            "http://localhost:8080",
+            "http://127.0.0.1:8080"
+    };
+
     private final StompAuthChannelInterceptor stompAuthChannelInterceptor;
 
     public WebSocketConfig(StompAuthChannelInterceptor stompAuthChannelInterceptor) {
@@ -23,8 +30,12 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint("/ws-native");
-        registry.addEndpoint("/ws").withSockJS();
+        registry.addEndpoint("/ws-native")
+                .setAllowedOriginPatterns(ALLOWED_ORIGIN_PATTERNS);
+
+        registry.addEndpoint("/ws")
+                .setAllowedOriginPatterns(ALLOWED_ORIGIN_PATTERNS)
+                .withSockJS();
     }
 
     @Override
