@@ -28,6 +28,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 async function restoreFeedbackUser() {
     if (!feedbackState.sessionToken) {
+        applyFeedbackIdentityState(false);
         return;
     }
 
@@ -36,11 +37,27 @@ async function restoreFeedbackUser() {
         feedbackState.me = response.data;
         feedbackElements.nickname.value = response.data.nickname || "";
         feedbackElements.school.value = response.data.school || "";
-        feedbackElements.userHint.textContent = "현재 로그인한 닉네임과 학교가 자동으로 채워졌습니다.";
+        applyFeedbackIdentityState(true);
     } catch (error) {
         feedbackState.sessionToken = null;
+        feedbackState.me = null;
         localStorage.removeItem(FEEDBACK_STORAGE_KEY);
+        applyFeedbackIdentityState(false);
     }
+}
+
+function applyFeedbackIdentityState(isLoggedIn) {
+    if (!feedbackElements.nickname || !feedbackElements.school || !feedbackElements.userHint) {
+        return;
+    }
+
+    feedbackElements.nickname.readOnly = isLoggedIn;
+    feedbackElements.school.readOnly = isLoggedIn;
+    feedbackElements.nickname.classList.toggle("auto-filled", isLoggedIn);
+    feedbackElements.school.classList.toggle("auto-filled", isLoggedIn);
+    feedbackElements.userHint.textContent = isLoggedIn
+        ? "로그인 유지 중입니다. 닉네임과 학교는 현재 계정 정보로 자동 채워집니다."
+        : "로그인 상태면 닉네임과 학교가 자동으로 채워집니다.";
 }
 
 async function loadOnlineCount() {
@@ -65,8 +82,8 @@ async function handleFeedbackSubmit(event) {
     event.preventDefault();
 
     const payload = {
-        nickname: feedbackElements.nickname.value.trim(),
-        school: feedbackElements.school.value.trim(),
+        nickname: feedbackState.me?.nickname || feedbackElements.nickname.value.trim(),
+        school: feedbackState.me?.school || feedbackElements.school.value.trim(),
         content: feedbackElements.content.value.trim()
     };
 
@@ -77,6 +94,7 @@ async function handleFeedbackSubmit(event) {
         });
 
         feedbackElements.content.value = "";
+
         if (!feedbackState.me) {
             feedbackElements.nickname.value = payload.nickname;
             feedbackElements.school.value = payload.school;
@@ -107,8 +125,8 @@ function renderFeedbackPosts(posts) {
         article.innerHTML = `
             <div class="feedback-post-head">
                 <div class="feedback-post-meta">
-                    <strong>${post.nickname}</strong>
-                    <span>${post.school}</span>
+                    <strong>${escapeHtml(post.nickname)}</strong>
+                    <span>${escapeHtml(post.school || "-")}</span>
                 </div>
                 <time>${formatFeedbackTime(post.createdAt)}</time>
             </div>
@@ -122,6 +140,10 @@ function renderFeedbackPosts(posts) {
 }
 
 function renderFeedbackEmpty(message) {
+    if (!feedbackElements.list) {
+        return;
+    }
+
     feedbackElements.list.innerHTML = `<div class="empty-box">${message}</div>`;
 }
 
@@ -175,4 +197,13 @@ function showFeedbackToast(message) {
     feedbackState.toastTimerId = window.setTimeout(() => {
         feedbackElements.toast.classList.add("hidden");
     }, 2600);
+}
+
+function escapeHtml(value) {
+    return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll("\"", "&quot;")
+        .replaceAll("'", "&#39;");
 }

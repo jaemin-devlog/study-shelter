@@ -22,6 +22,7 @@ function logRealtime(event, payload = {}) {
 const elements = {
     authSection: document.getElementById("authSection"),
     appSection: document.getElementById("appSection"),
+    chatPanel: document.getElementById("chatPanel"),
     loginForm: document.getElementById("loginForm"),
     signupForm: document.getElementById("signupForm"),
     logoutButton: document.getElementById("logoutButton"),
@@ -748,6 +749,21 @@ function showAuthSection() {
 function showAppSection() {
     elements.authSection.classList.add("hidden");
     elements.appSection.classList.remove("hidden");
+    focusChatPanelIfRequested();
+}
+
+function focusChatPanelIfRequested() {
+    if (window.location.hash !== "#chat") {
+        return;
+    }
+
+    window.requestAnimationFrame(() => {
+        elements.chatPanel?.scrollIntoView({
+            block: "center",
+            behavior: "smooth"
+        });
+        elements.chatInput?.focus({preventScroll: true});
+    });
 }
 
 function clearSessionState() {

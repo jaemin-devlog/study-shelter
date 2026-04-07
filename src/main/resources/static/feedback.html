@@ -22,8 +22,8 @@
     <div class="floating-notes" aria-hidden="true">
         <span class="floating-note note-1">피드백</span>
         <span class="floating-note note-2">학업대피소</span>
-        <span class="floating-note note-3">개선 의견</span>
-        <span class="floating-note note-4">버그 제보</span>
+        <span class="floating-note note-3">개선 요청</span>
+        <span class="floating-note note-4">의견 모아</span>
     </div>
 
     <header class="top-strip">
@@ -32,7 +32,7 @@
             <span class="top-pill top-pill--muted">LIKELION</span>
         </div>
         <div class="top-status">
-            <a href="/index.html" class="feedback-link-button">메인으로</a>
+            <a href="/index.html#chat" class="feedback-link-button">메인으로</a>
             <div class="stat-pill">
                 <span class="stat-pill__label">현재 접속</span>
                 <strong id="feedbackOnlineCount">0명</strong>
@@ -42,10 +42,10 @@
 
     <main class="stage feedback-stage">
         <section class="hero feedback-hero">
-            <p class="stage-caption">마음에 들지 않는 점이나 추가하고 싶은 점을 남겨주세요</p>
+            <p class="stage-caption">떠오른 생각이나 불편한 점을 편하게 남겨주세요.</p>
             <h1 class="stage-title">피드백 게시판</h1>
             <p class="stage-description">
-                학업대피소를 쓰면서 느낀 불편한 점, 좋았던 점, 추가되면 좋을 기능을 자유롭게 남길 수 있습니다.
+                학업대피소를 쓰면서 아쉬웠던 점, 고치면 좋을 점, 추가되면 좋을 기능을 자유롭게 남겨주세요.
             </p>
         </section>
 
@@ -54,13 +54,13 @@
                 <section class="panel feedback-form-panel">
                     <div class="panel-title-row">
                         <h2>피드백 작성</h2>
-                        <span class="subtle-text" id="feedbackUserHint">로그인하면 닉네임과 학교를 자동으로 채워줍니다.</span>
+                        <span class="subtle-text" id="feedbackUserHint">로그인 상태면 닉네임과 학교가 자동으로 채워집니다.</span>
                     </div>
 
                     <form id="feedbackForm" class="feedback-form">
                         <label>
                             <span>닉네임</span>
-                            <input id="feedbackNickname" type="text" maxlength="20" placeholder="예: 밤샘러" required>
+                            <input id="feedbackNickname" type="text" maxlength="20" placeholder="예: 밤샐러" required>
                         </label>
 
                         <label>
@@ -70,7 +70,7 @@
 
                         <label>
                             <span>내용</span>
-                            <textarea id="feedbackContent" maxlength="1000" rows="9" placeholder="원하는 기능이나 수정이 필요한 부분을 자세히 적어주세요." required></textarea>
+                            <textarea id="feedbackContent" maxlength="1000" rows="9" placeholder="아쉬운 점이나 추가되면 좋을 기능을 자세히 적어주세요." required></textarea>
                         </label>
 
                         <button type="submit" class="secondary-btn">피드백 등록</button>
@@ -80,7 +80,7 @@
                 <section class="panel feedback-list-panel">
                     <div class="panel-title-row">
                         <h2>최근 피드백</h2>
-                        <span class="subtle-text">새 글이 위에 보입니다.</span>
+                        <span class="subtle-text">최신 글부터 위에 보입니다.</span>
                     </div>
 
                     <div id="feedbackList" class="feedback-list"></div>
