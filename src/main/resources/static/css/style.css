@@ -56,7 +56,7 @@ textarea {
 .scene-shell {
     position: relative;
     min-height: 100vh;
-    padding: 18px clamp(14px, 2.2vw, 30px) 118px;
+    padding: 28px clamp(14px, 2.2vw, 30px) 118px;
     overflow: hidden;
     isolation: isolate;
 }
@@ -460,7 +460,7 @@ textarea {
     display: grid;
     grid-template-columns: 276px minmax(0, 1fr) 308px;
     gap: 16px;
-    min-height: 500px;
+    min-height: 560px;
     height: 100%;
 }
 
@@ -839,7 +839,7 @@ button:active {
 
 .chat-messages {
     flex: 1;
-    min-height: 0;
+    min-height: 360px;
     overflow-y: auto;
     padding: 16px;
     border-radius: 26px;
@@ -1521,6 +1521,7 @@ button:active {
 
     .scene-shell:has(#appSection:not(.hidden)) {
         height: 100vh;
+        padding-top: 32px;
         padding-bottom: 90px;
     }
 
@@ -1544,7 +1545,7 @@ button:active {
 
     .beach-board--app .app-layout {
         flex: 1;
-        min-height: 0;
+        min-height: 560px;
     }
 
     .beach-board--app .profile-panel,
@@ -1574,6 +1575,7 @@ button:active {
 
 @media (max-height: 940px) and (min-width: 981px) {
     .scene-shell {
+        padding-top: 22px;
         padding-bottom: 98px;
     }
 
@@ -1608,6 +1610,7 @@ button:active {
     .app-layout {
         grid-template-columns: 240px minmax(0, 1fr) 274px;
         gap: 14px;
+        min-height: 520px;
     }
 
     .my-time-card strong {
@@ -1615,6 +1618,7 @@ button:active {
     }
 
     .chat-messages {
+        min-height: 320px;
         padding: 14px;
     }
 
