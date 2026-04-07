@@ -26,3 +26,7 @@ ddanjit:
   heartbeat-interval-millis: 10000
   stale-threshold-millis: 30000
   cleanup-fixed-delay-millis: 15000
+
+logging:
+  level:
+    likelion.simsim.config: INFO

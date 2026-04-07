@@ -15,6 +15,10 @@ const state = {
     onlineCount: 0
 };
 
+function logRealtime(event, payload = {}) {
+    console.info(`[realtime] ${event}`, payload);
+}
+
 const elements = {
     authSection: document.getElementById("authSection"),
     appSection: document.getElementById("appSection"),
@@ -224,15 +228,30 @@ async function loadInitialSnapshots() {
 }
 
 function connectWebSocket() {
+    logRealtime("connect:start", {
+        hasSessionToken: Boolean(state.sessionToken),
+        host: window.location.host,
+        protocol: window.location.protocol
+    });
     connectWebSocketWithFallback(false);
 }
 
 function connectWebSocketWithFallback(useSockJsFallback) {
     if (!state.sessionToken || state.connected) {
+        logRealtime("connect:skip", {
+            hasSessionToken: Boolean(state.sessionToken),
+            connected: state.connected,
+            fallback: useSockJsFallback
+        });
         return;
     }
 
     setConnectionStatus("연결 중", "connecting");
+    logRealtime("connect:attempt", {
+        fallback: useSockJsFallback,
+        nativeUrl: useSockJsFallback ? null : buildNativeWsUrl(),
+        sockJsUrl: useSockJsFallback ? `${window.location.origin}/ws` : null
+    });
 
     const client = new StompJs.Client({
         connectHeaders: {
@@ -241,6 +260,9 @@ function connectWebSocketWithFallback(useSockJsFallback) {
         reconnectDelay: 0,
         debug: () => {},
         onConnect: () => {
+            logRealtime("connect:success", {
+                fallback: useSockJsFallback
+            });
             state.stompClient = client;
             state.connected = true;
 
@@ -257,10 +279,24 @@ function connectWebSocketWithFallback(useSockJsFallback) {
             loadInitialSnapshots();
         },
         onStompError: (frame) => {
+            logRealtime("connect:stomp-error", {
+                fallback: useSockJsFallback,
+                headers: frame.headers,
+                body: frame.body
+            });
             handleUnexpectedDisconnect(frame.headers.message || "실시간 연결 중 오류가 발생했습니다.");
         },
         onWebSocketClose: () => {
+            logRealtime("connect:websocket-close", {
+                fallback: useSockJsFallback,
+                connected: state.connected,
+                manualDisconnect: state.manualDisconnect
+            });
             if (!state.connected && !state.manualDisconnect && !useSockJsFallback) {
+                logRealtime("connect:fallback", {
+                    from: "native",
+                    to: "sockjs"
+                });
                 connectWebSocketWithFallback(true);
                 return;
             }
@@ -269,7 +305,11 @@ function connectWebSocketWithFallback(useSockJsFallback) {
                 handleUnexpectedDisconnect("연결이 종료되어 세션을 정리했습니다. 다시 로그인해 주세요.");
             }
         },
-        onWebSocketError: () => {
+        onWebSocketError: (event) => {
+            logRealtime("connect:websocket-error", {
+                fallback: useSockJsFallback,
+                eventType: event?.type || null
+            });
             setConnectionStatus("연결 오류", "offline");
         }
     });
@@ -354,6 +394,9 @@ async function disconnectSocket() {
 }
 
 async function handleUnexpectedDisconnect(message) {
+    logRealtime("connect:unexpected-disconnect", {
+        message
+    });
     state.connected = false;
     clearSessionState();
     await loadPublicSnapshots();

@@ -7,6 +7,8 @@ import likelion.simsim.common.AuthConstants;
 import likelion.simsim.common.exception.UnauthorizedException;
 import likelion.simsim.presence.PresenceConnectedEvent;
 import likelion.simsim.presence.PresenceRegistryService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.lang.NonNull;
 import org.springframework.messaging.Message;
@@ -21,11 +23,12 @@ import org.springframework.util.StringUtils;
 import java.util.Map;
 
 /**
- * WebSocket CONNECT 시점에 sessionToken 을 검사하고
- * 이후 메시지 전송 시에도 세션이 살아있는지 확인합니다.
+ * STOMP CONNECT, SEND 단계의 인증 흐름을 추적한다.
  */
 @Component
 public class StompAuthChannelInterceptor implements ChannelInterceptor {
+
+    private static final Logger log = LoggerFactory.getLogger(StompAuthChannelInterceptor.class);
 
     private final SessionTokenResolver sessionTokenResolver;
     private final SessionService sessionService;
@@ -51,6 +54,13 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
             return message;
         }
 
+        log.info(
+                "STOMP_FRAME command={} sessionId={} destination={}",
+                accessor.getCommand(),
+                accessor.getSessionId(),
+                accessor.getDestination()
+        );
+
         if (StompCommand.CONNECT.equals(accessor.getCommand())) {
             authenticateConnect(accessor);
         }
@@ -65,11 +75,17 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
     private void authenticateConnect(StompHeaderAccessor accessor) {
         String sessionToken = sessionTokenResolver.resolveFromStompHeader(accessor);
         if (!StringUtils.hasText(sessionToken)) {
+            log.warn("STOMP_CONNECT_REJECT reason=missing-session-token sessionId={}", accessor.getSessionId());
             throw new UnauthorizedException("WebSocket CONNECT 헤더에 sessionToken 이 필요합니다.");
         }
 
         SessionInfo sessionInfo = sessionService.requireSession(sessionToken);
         if (sessionService.isTokenAlreadyConnected(sessionToken)) {
+            log.warn(
+                    "STOMP_CONNECT_REJECT reason=already-connected nickname={} sessionId={}",
+                    sessionInfo.nickname(),
+                    accessor.getSessionId()
+            );
             throw new UnauthorizedException("이미 연결된 세션입니다. 중복 WebSocket 접속은 허용하지 않습니다.");
         }
 
@@ -80,11 +96,17 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
 
         String stompSessionId = accessor.getSessionId();
         if (!StringUtils.hasText(stompSessionId)) {
+            log.warn("STOMP_CONNECT_REJECT reason=missing-stomp-session-id nickname={}", sessionInfo.nickname());
             throw new UnauthorizedException("WebSocket 세션 ID를 확인할 수 없습니다.");
         }
 
-        // CONNECT 프레임 단계에서 즉시 온라인 세션으로 등록해야
-        // 프론트가 연결 직후 조회하는 내 시간/랭킹에 바로 반영됩니다.
+        log.info(
+                "STOMP_CONNECT_ACCEPT nickname={} sessionId={} tokenSuffix={}",
+                sessionInfo.nickname(),
+                stompSessionId,
+                sessionToken.length() > 8 ? sessionToken.substring(sessionToken.length() - 8) : sessionToken
+        );
+
         presenceRegistryService.registerConnectedSession(sessionToken, stompSessionId);
         applicationEventPublisher.publishEvent(new PresenceConnectedEvent(sessionToken));
     }
@@ -92,15 +114,18 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
     private void validateSend(StompHeaderAccessor accessor) {
         Map<String, Object> sessionAttributes = accessor.getSessionAttributes();
         if (sessionAttributes == null) {
+            log.warn("STOMP_SEND_REJECT reason=missing-session-attributes sessionId={}", accessor.getSessionId());
             throw new UnauthorizedException("WebSocket 세션 정보가 없습니다.");
         }
 
         Object tokenValue = sessionAttributes.get(AuthConstants.SESSION_TOKEN_ATTR);
         String sessionToken = tokenValue == null ? null : String.valueOf(tokenValue);
         if (!StringUtils.hasText(sessionToken)) {
+            log.warn("STOMP_SEND_REJECT reason=missing-session-token sessionId={}", accessor.getSessionId());
             throw new UnauthorizedException("세션 토큰이 없습니다.");
         }
 
+        log.info("STOMP_SEND_ACCEPT sessionId={} destination={}", accessor.getSessionId(), accessor.getDestination());
         sessionService.requireSession(sessionToken);
     }
 }
