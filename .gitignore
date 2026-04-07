@@ -39,4 +39,3 @@ out/
 .env.*
 !.env.example
 ss.env
-src/main/resources/application.yml
