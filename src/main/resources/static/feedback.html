@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>학업대피소 피드백 게시판</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Jua&family=Pretendard:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="scene-shell">
+    <div class="sky-decor" aria-hidden="true">
+        <div class="sun"></div>
+        <div class="cloud cloud-1"></div>
+        <div class="cloud cloud-2"></div>
+        <div class="cloud cloud-3"></div>
+        <div class="island"></div>
+    </div>
+
+    <div class="floating-notes" aria-hidden="true">
+        <span class="floating-note note-1">피드백</span>
+        <span class="floating-note note-2">학업대피소</span>
+        <span class="floating-note note-3">개선 의견</span>
+        <span class="floating-note note-4">버그 제보</span>
+    </div>
+
+    <header class="top-strip">
+        <div class="top-pills">
+            <span class="top-pill">학업에 지친 사람 모여라!</span>
+            <span class="top-pill top-pill--muted">LIKELION</span>
+        </div>
+        <div class="top-status">
+            <a href="/index.html" class="feedback-link-button">메인으로</a>
+            <div class="stat-pill">
+                <span class="stat-pill__label">현재 접속</span>
+                <strong id="feedbackOnlineCount">0명</strong>
+            </div>
+        </div>
+    </header>
+
+    <main class="stage feedback-stage">
+        <section class="hero feedback-hero">
+            <p class="stage-caption">마음에 들지 않는 점이나 추가하고 싶은 점을 남겨주세요</p>
+            <h1 class="stage-title">피드백 게시판</h1>
+            <p class="stage-description">
+                학업대피소를 쓰면서 느낀 불편한 점, 좋았던 점, 추가되면 좋을 기능을 자유롭게 남길 수 있습니다.
+            </p>
+        </section>
+
+        <section class="feedback-board">
+            <div class="feedback-layout">
+                <section class="panel feedback-form-panel">
+                    <div class="panel-title-row">
+                        <h2>피드백 작성</h2>
+                        <span class="subtle-text" id="feedbackUserHint">로그인하면 닉네임과 학교를 자동으로 채워줍니다.</span>
+                    </div>
+
+                    <form id="feedbackForm" class="feedback-form">
+                        <label>
+                            <span>닉네임</span>
+                            <input id="feedbackNickname" type="text" maxlength="20" placeholder="예: 밤샘러" required>
+                        </label>
+
+                        <label>
+                            <span>학교</span>
+                            <input id="feedbackSchool" type="text" maxlength="40" placeholder="예: 멋사대학교">
+                        </label>
+
+                        <label>
+                            <span>내용</span>
+                            <textarea id="feedbackContent" maxlength="1000" rows="9" placeholder="원하는 기능이나 수정이 필요한 부분을 자세히 적어주세요." required></textarea>
+                        </label>
+
+                        <button type="submit" class="secondary-btn">피드백 등록</button>
+                    </form>
+                </section>
+
+                <section class="panel feedback-list-panel">
+                    <div class="panel-title-row">
+                        <h2>최근 피드백</h2>
+                        <span class="subtle-text">새 글이 위에 보입니다.</span>
+                    </div>
+
+                    <div id="feedbackList" class="feedback-list"></div>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <div class="shoreline" aria-hidden="true">
+        <div class="shoreline-wave shoreline-wave-1"></div>
+        <div class="shoreline-wave shoreline-wave-2"></div>
+        <div class="shore-icons">
+            <span class="shore-icon shore-icon--umbrella"></span>
+            <span class="shore-icon shore-icon--shell"></span>
+            <span class="shore-icon shore-icon--float"></span>
+            <span class="shore-icon shore-icon--star"></span>
+            <span class="shore-icon shore-icon--surf"></span>
+        </div>
+    </div>
+
+    <div id="feedbackToast" class="toast hidden"></div>
+</div>
+
+<script src="/js/feedback.js" defer></script>
+</body>
+</html>

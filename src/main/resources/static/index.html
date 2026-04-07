@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>학업대피소</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Jua&family=Pretendard:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="scene-shell">
+    <div class="sky-decor" aria-hidden="true">
+        <div class="sun"></div>
+        <div class="cloud cloud-1"></div>
+        <div class="cloud cloud-2"></div>
+        <div class="cloud cloud-3"></div>
+        <div class="island"></div>
+    </div>
+
+    <div class="floating-notes" aria-hidden="true">
+        <span class="floating-note note-1">LIKELION</span>
+        <span class="floating-note note-2">시험기간</span>
+        <span class="floating-note note-3">공부 싫어</span>
+        <span class="floating-note note-4">다 모여라</span>
+    </div>
+
+    <header class="top-strip">
+        <div class="top-pills">
+            <span class="top-pill">학업에 지친 사람 모여라!</span>
+            <span class="top-pill top-pill--muted">LIKELION</span>
+        </div>
+        <div class="top-status">
+            <a href="/feedback.html" class="feedback-link-button">피드백 제공</a>
+            <button type="button" class="stat-pill stat-pill--button" id="onlineUsersButton">
+                <span class="stat-pill__label">현재 접속</span>
+                <strong id="onlineCount">0명</strong>
+            </button>
+        </div>
+    </header>
+
+    <main class="stage">
+        <section class="hero">
+            <p class="stage-caption">공부하기 싫은 사람들 다 여기로 모여라</p>
+            <h1 class="stage-title">학업대피소</h1>
+            <p class="stage-description">
+                시험기간에 잠깐 숨 돌리고 싶은 사람들을 위한 익명 놀이터입니다.
+                접속 기록은 전체 랭킹에 남고, 채팅 기록도 계속 저장됩니다.
+            </p>
+        </section>
+
+        <section id="authSection">
+            <div class="beach-board beach-board--auth">
+                <div class="auth-grid">
+                    <section class="panel board-intro">
+                        <span class="board-intro__eyebrow">WELCOME</span>
+                        <div>
+                            <h2>공부하기 싫은 사람들의 실시간 대피소</h2>
+                            <p>
+                                시험기간에 집중이 안 될 때 잠깐 모여서 쉬어갈 수 있는 익명 공간입니다.
+                                닉네임과 학교만으로 가볍게 입장해서 다른 사람들과 실시간으로 이야기할 수 있습니다.
+                            </p>
+                        </div>
+
+                        <div class="intro-badges">
+                            <span class="intro-badge">실시간 접속 인원</span>
+                            <span class="intro-badge">전체 누적 랭킹</span>
+                            <span class="intro-badge">저장된 채팅 기록</span>
+                        </div>
+
+                        <div class="intro-card">
+                            <strong>이런 곳이에요</strong>
+                            <p>나만 안 하는 거 아니에요. 여기 실시간 인원수 보세요. 동료가 이렇게나 많습니다ㅎㅎ </p>
+                        </div>
+
+                        <div class="intro-card intro-card--soft">
+                            <strong>같이 쉬어가기</strong>
+                            <p>여기는 '미래의 나'에게 모든 걸 맡긴 용감한 자들의 쉼터입니다.</p>
+                        </div>
+                    </section>
+
+                    <section class="panel auth-panel">
+                        <div>
+                            <h2>로그인</h2>
+                            <form id="loginForm" class="form-stack">
+                                <label>
+                                    <span>닉네임</span>
+                                    <input id="loginNickname" type="text" maxlength="20" placeholder="예: 밤샘러" required>
+                                </label>
+                                <label>
+                                    <span>비밀번호</span>
+                                    <input id="loginPassword" type="password" maxlength="100" placeholder="비밀번호 입력" required>
+                                </label>
+                                <button type="submit" class="primary-btn">입장하기</button>
+                            </form>
+                        </div>
+                        <p class="helper-text">
+                            로그인하면 현재 접속 인원, 저장된 채팅, 전체 랭킹이 바로 함께 갱신됩니다.
+                        </p>
+                    </section>
+
+                    <section class="panel auth-panel">
+                        <div>
+                            <h2>회원가입</h2>
+                            <form id="signupForm" class="form-stack">
+                                <label>
+                                    <span>닉네임</span>
+                                    <input id="signupNickname" type="text" maxlength="20" placeholder="중복 불가 닉네임" required>
+                                </label>
+                                <label>
+                                    <span>비밀번호</span>
+                                    <input id="signupPassword" type="password" maxlength="100" placeholder="4자 이상 입력" required>
+                                </label>
+                                <label>
+                                    <span>학교</span>
+                                    <input id="signupSchool" type="text" maxlength="40" placeholder="예: 멋사대학교" required>
+                                </label>
+                                <button type="submit" class="secondary-btn">계정 만들기</button>
+                            </form>
+                        </div>
+                        <p class="helper-text">
+                            실명, 학번, 이메일 없이 닉네임과 비밀번호, 학교만 저장합니다.
+                        </p>
+                    </section>
+                </div>
+            </div>
+        </section>
+
+        <section id="appSection" class="hidden">
+            <div class="beach-board beach-board--app">
+                <div class="app-layout">
+                    <aside class="panel side-panel profile-panel">
+                        <div class="panel-title-row">
+                            <h2>내 상태</h2>
+                            <button id="logoutButton" type="button" class="ghost-btn">로그아웃</button>
+                        </div>
+
+                        <div class="my-time-card">
+                            <span class="time-card-label">학업대피소 머문 시간</span>
+                            <strong id="myElapsedTime">00시간00분00초</strong>
+                            <span class="time-card-sub" id="mySessionStatus">대기 중</span>
+                        </div>
+
+                        <dl class="profile-list">
+                            <div>
+                                <dt>닉네임</dt>
+                                <dd id="myNickname">-</dd>
+                            </div>
+                            <div>
+                                <dt>학교</dt>
+                                <dd id="mySchool">-</dd>
+                            </div>
+                            <div>
+                                <dt>현재 순위</dt>
+                                <dd id="myRankText">집계 중</dd>
+                            </div>
+                        </dl>
+
+                        <div class="notice-box">
+                            <strong>안내</strong>
+                            <p>현재 화면은 한 판 안에서 고정되고, 채팅과 랭킹 영역만 내부 스크롤됩니다.</p>
+                            <p>시험기간을 피해 잠깐 자유롭게 떠들고 쉬어갈 수 있는 공간입니다.</p>
+                        </div>
+                    </aside>
+
+                    <section class="panel chat-panel">
+                        <div class="panel-title-row">
+                            <h2>전체 익명 채팅</h2>
+                            <span class="subtle-text">상대는 왼쪽, 내 메시지는 오른쪽</span>
+                        </div>
+
+                        <div id="chatMessages" class="chat-messages"></div>
+
+                        <form id="chatForm" class="chat-form">
+                            <input id="chatInput" type="text" maxlength="300" placeholder="학업대피소에 한마디 남겨보세요." autocomplete="off" required>
+                            <button type="submit" class="primary-btn">전송</button>
+                        </form>
+                    </section>
+
+                    <aside class="panel ranking-panel">
+                        <div class="panel-title-row">
+                            <h2>전체 누적 Top 10</h2>
+                            <span class="subtle-text">공부 싫어하는 사람 순위!!</span>
+                        </div>
+                        <ol id="rankingList" class="ranking-list"></ol>
+                    </aside>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div id="onlineUsersModal" class="modal hidden">
+        <div class="modal-backdrop" id="onlineUsersBackdrop"></div>
+        <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="onlineUsersTitle">
+            <div class="modal-header">
+                <div>
+                    <h2 id="onlineUsersTitle">현재 접속 명단</h2>
+                    <p class="modal-description">지금 학업대피소에 머물고 있는 사람들입니다.</p>
+                </div>
+                <button type="button" class="ghost-btn modal-close" id="closeOnlineUsersModal">닫기</button>
+            </div>
+            <ul id="onlineUsersList" class="online-users-list"></ul>
+        </div>
+    </div>
+
+    <div class="shoreline" aria-hidden="true">
+        <div class="shoreline-wave shoreline-wave-1"></div>
+        <div class="shoreline-wave shoreline-wave-2"></div>
+        <div class="shore-icons">
+            <span class="shore-icon shore-icon--umbrella"></span>
+            <span class="shore-icon shore-icon--shell"></span>
+            <span class="shore-icon shore-icon--float"></span>
+            <span class="shore-icon shore-icon--star"></span>
+            <span class="shore-icon shore-icon--surf"></span>
+        </div>
+    </div>
+
+    <div id="presenceToast" class="presence-toast hidden"></div>
+    <div id="toast" class="toast hidden"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@7.0.0/bundles/stomp.umd.min.js"></script>
+<script src="/js/app.js" defer></script>
+</body>
+</html>
