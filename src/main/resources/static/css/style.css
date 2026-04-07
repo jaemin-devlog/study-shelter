@@ -1390,11 +1390,19 @@ button:active {
     display: none !important;
 }
 
-@media (min-width: 981px) {
+@media (min-width: 1600px) {
     html {
-        zoom: 0.82;
+        zoom: 0.66;
     }
+}
 
+@media (min-width: 981px) and (max-width: 1599px) {
+    html {
+        zoom: 0.74;
+    }
+}
+
+@media (min-width: 981px) {
     body:has(#appSection:not(.hidden)) {
         overflow: hidden;
     }
