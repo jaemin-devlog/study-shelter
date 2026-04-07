@@ -1,4 +1,6 @@
 :root {
+    --font-ui: "Jua", "Pretendard", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+    --font-body: "Jua", "Pretendard", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
     --sky-top: #9fe4ff;
     --sky-mid: #91e8dc;
     --sky-bottom: #bff3ff;
@@ -39,7 +41,8 @@ body {
     min-height: 100vh;
     overflow-x: hidden;
     color: var(--ink);
-    font-family: "Pretendard", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+    font-family: var(--font-body);
+    font-weight: 500;
     background:
         linear-gradient(180deg, var(--sky-top) 0%, var(--sky-mid) 34%, #83d8ee 55%, #92e4d2 100%);
 }
@@ -210,8 +213,9 @@ textarea {
 .floating-note {
     position: absolute;
     color: rgba(29, 105, 111, 0.18);
-    font-family: "Jua", "Pretendard", sans-serif;
+    font-family: var(--font-ui);
     font-size: clamp(2rem, 4.2vw, 4rem);
+    font-weight: 500;
     letter-spacing: 0.02em;
     text-shadow: 0 4px 10px rgba(255, 255, 255, 0.12);
     user-select: none;
@@ -270,7 +274,7 @@ textarea {
 
 .top-pill {
     padding: 10px 18px;
-    font-weight: 800;
+    font-weight: 900;
     font-size: 0.95rem;
 }
 
@@ -310,7 +314,7 @@ textarea {
     padding: 9px 18px;
     text-align: center;
     font-size: 0.96rem;
-    font-weight: 900;
+    font-weight: 950;
 }
 
 .status-pill.online {
@@ -339,7 +343,7 @@ textarea {
     background: rgba(255, 255, 255, 0.82);
     color: var(--ink);
     text-decoration: none;
-    font-weight: 900;
+    font-weight: 950;
     box-shadow: 0 8px 24px rgba(28, 87, 100, 0.08);
     transition: transform 0.14s ease, filter 0.14s ease;
 }
@@ -366,8 +370,9 @@ textarea {
 .stage-caption {
     margin: 0;
     color: rgba(255, 255, 255, 0.98);
-    font-family: "Jua", "Pretendard", sans-serif;
+    font-family: var(--font-ui);
     font-size: 1rem;
+    font-weight: 500;
     letter-spacing: 0.02em;
     text-shadow: 0 3px 10px rgba(28, 101, 112, 0.18);
 }
@@ -375,8 +380,9 @@ textarea {
 .stage-title {
     margin: 10px 0 8px;
     color: #fffaf0;
-    font-family: "Jua", "Pretendard", sans-serif;
+    font-family: var(--font-ui);
     font-size: clamp(3.1rem, 6.8vw, 6.1rem);
+    font-weight: 500;
     line-height: 0.95;
     letter-spacing: 0.06em;
     text-shadow:
@@ -389,6 +395,7 @@ textarea {
     margin: 0 auto;
     color: rgba(255, 255, 255, 0.97);
     font-size: 0.98rem;
+    font-weight: 500;
     line-height: 1.6;
     word-break: keep-all;
     text-shadow: 0 2px 8px rgba(28, 101, 112, 0.18);
@@ -491,8 +498,9 @@ textarea {
     border: 2px solid rgba(13, 142, 151, 0.18);
     background: rgba(200, 255, 248, 0.62);
     color: var(--teal);
-    font-family: "Jua", "Pretendard", sans-serif;
+    font-family: var(--font-ui);
     font-size: 0.88rem;
+    font-weight: 500;
     letter-spacing: 0.06em;
 }
 
@@ -500,8 +508,9 @@ textarea {
 .panel h2 {
     margin: 0 0 10px;
     color: var(--ink);
-    font-family: "Jua", "Pretendard", sans-serif;
+    font-family: var(--font-ui);
     font-size: 1.9rem;
+    font-weight: 500;
     line-height: 1.08;
     word-break: keep-all;
 }
@@ -513,6 +522,7 @@ textarea {
     margin: 0;
     color: var(--muted);
     font-size: 0.95rem;
+    font-weight: 500;
     line-height: 1.62;
     word-break: keep-all;
     overflow-wrap: normal;
@@ -530,7 +540,7 @@ textarea {
     border: 2px solid rgba(79, 55, 35, 0.1);
     background: rgba(255, 255, 255, 0.74);
     font-size: 0.86rem;
-    font-weight: 800;
+    font-weight: 900;
 }
 
 .intro-card {
@@ -547,8 +557,9 @@ textarea {
 .intro-card strong {
     display: block;
     margin-bottom: 8px;
-    font-family: "Jua", "Pretendard", sans-serif;
+    font-family: var(--font-ui);
     font-size: 1.05rem;
+    font-weight: 500;
 }
 
 .intro-card p {
@@ -568,7 +579,7 @@ label span {
     display: block;
     margin-bottom: 7px;
     font-size: 0.94rem;
-    font-weight: 800;
+    font-weight: 900;
 }
 
 input {
@@ -611,8 +622,9 @@ button {
     border: 3px solid var(--line);
     border-radius: 20px;
     padding: 12px 18px;
-    font-family: "Jua", "Pretendard", sans-serif;
+    font-family: var(--font-ui);
     font-size: 1.02rem;
+    font-weight: 500;
     letter-spacing: 0.02em;
     cursor: pointer;
     box-shadow: 0 6px 0 rgba(79, 55, 35, 0.2);
@@ -702,7 +714,7 @@ button:active {
 .time-card-label {
     margin-bottom: 10px;
     font-size: 0.82rem;
-    font-weight: 800;
+    font-weight: 900;
     opacity: 0.92;
     white-space: nowrap;
 }
@@ -712,7 +724,8 @@ button:active {
     margin-bottom: 6px;
     font-size: 1.34rem;
     line-height: 1.04;
-    font-family: "Jua", "Pretendard", sans-serif;
+    font-family: var(--font-ui);
+    font-weight: 500;
     letter-spacing: -0.06em;
     white-space: nowrap;
     word-break: keep-all;
@@ -741,13 +754,13 @@ button:active {
     margin-bottom: 6px;
     color: var(--muted);
     font-size: 0.88rem;
-    font-weight: 800;
+    font-weight: 900;
 }
 
 .profile-list dd {
     margin: 0;
     font-size: 0.98rem;
-    font-weight: 800;
+    font-weight: 900;
     word-break: keep-all;
     overflow-wrap: normal;
 }
@@ -814,8 +827,9 @@ button:active {
 .notice-box strong {
     display: block;
     margin-bottom: 8px;
-    font-family: "Jua", "Pretendard", sans-serif;
+    font-family: var(--font-ui);
     font-size: 1rem;
+    font-weight: 500;
 }
 
 .chat-panel {
@@ -887,11 +901,11 @@ button:active {
 
 .chat-sender {
     color: var(--teal-deep);
-    font-weight: 900;
+    font-weight: 950;
 }
 
 .chat-school {
-    font-weight: 700;
+    font-weight: 800;
 }
 
 .chat-time {
@@ -1016,7 +1030,7 @@ button:active {
 
 .ranking-name {
     display: block;
-    font-weight: 900;
+    font-weight: 950;
     font-size: 0.94rem;
     line-height: 1.12;
     white-space: nowrap;
@@ -1040,7 +1054,8 @@ button:active {
 }
 
 .ranking-time {
-    font-family: "Jua", "Pretendard", sans-serif;
+    font-family: var(--font-ui);
+    font-weight: 500;
     font-size: 0.96rem;
     color: var(--teal-deep);
     white-space: nowrap;
@@ -1068,7 +1083,7 @@ button:active {
     border: 3px solid var(--line);
     background: rgba(255, 246, 235, 0.97);
     color: var(--ink);
-    font-weight: 800;
+    font-weight: 900;
     box-shadow: 0 10px 0 rgba(84, 60, 30, 0.16);
 }
 
@@ -1084,7 +1099,7 @@ button:active {
     background: rgba(255, 255, 255, 0.88);
     color: var(--ink);
     font-size: 0.88rem;
-    font-weight: 800;
+    font-weight: 900;
     box-shadow: 0 10px 24px rgba(49, 114, 128, 0.16);
     backdrop-filter: blur(12px);
 }
@@ -1245,8 +1260,9 @@ button:active {
 
 .modal-header h2 {
     margin: 0 0 6px;
-    font-family: "Jua", "Pretendard", sans-serif;
+    font-family: var(--font-ui);
     font-size: 1.8rem;
+    font-weight: 500;
 }
 
 .modal-description {
@@ -1290,8 +1306,9 @@ button:active {
     border-radius: 50%;
     border: 3px solid var(--line);
     background: linear-gradient(180deg, #ffe49a, #f2bf56);
-    font-family: "Jua", "Pretendard", sans-serif;
+    font-family: var(--font-ui);
     font-size: 0.96rem;
+    font-weight: 500;
 }
 
 .online-user-main {
@@ -1318,10 +1335,11 @@ button:active {
 }
 
 .online-user-time {
-    font-family: "Jua", "Pretendard", sans-serif;
+    font-family: var(--font-ui);
     color: var(--teal-deep);
     white-space: nowrap;
     font-size: 0.92rem;
+    font-weight: 500;
 }
 
 .shoreline {
