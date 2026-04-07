@@ -762,7 +762,7 @@ function clearSessionState() {
     elements.myNickname.textContent = "-";
     elements.mySchool.textContent = "-";
     elements.mySessionStatus.textContent = "대기 중";
-    elements.myElapsedTime.textContent = "00시간00분00초";
+    elements.myElapsedTime.textContent = "00시간 00분 00초";
     elements.myRankText.textContent = "집계 전";
 }
 
