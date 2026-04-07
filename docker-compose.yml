@@ -4,19 +4,23 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: study-shelter-app
+    env_file:
+      - .env
     depends_on:
       mysql:
         condition: service_healthy
       redis:
         condition: service_healthy
     environment:
-      MYSQL_HOST: mysql
-      MYSQL_PORT: 3306
-      MYSQL_DATABASE: ddanjit
-      MYSQL_USERNAME: root
-      MYSQL_PASSWORD: root123
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+      MYSQL_HOST: ${MYSQL_HOST}
+      MYSQL_PORT: ${MYSQL_PORT}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USERNAME: ${MYSQL_USERNAME}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
+      JPA_DDL_AUTO: ${JPA_DDL_AUTO}
       TZ: Asia/Seoul
     ports:
       - "127.0.0.1:8081:8080"
@@ -25,15 +29,17 @@ services:
   mysql:
     image: mysql:8.4
     container_name: ddanjit-mysql
+    env_file:
+      - .env
     environment:
-      MYSQL_DATABASE: ddanjit
-      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       TZ: Asia/Seoul
     command:
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_unicode_ci
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-proot123", "--silent"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-p${MYSQL_ROOT_PASSWORD}", "--silent"]
       interval: 10s
       timeout: 5s
       retries: 12
@@ -45,6 +51,8 @@ services:
   redis:
     image: redis:7.4-alpine
     container_name: ddanjit-redis
+    env_file:
+      - .env
     command: ["redis-server", "--appendonly", "yes"]
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
