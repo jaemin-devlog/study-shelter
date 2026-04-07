@@ -1,4 +1,4 @@
-const STORAGE_KEY = "ddanjit-session-token";
+﻿const STORAGE_KEY = "ddanjit-session-token";
 const HEARTBEAT_INTERVAL_MS = 10000;
 
 const state = {
@@ -108,7 +108,7 @@ async function handleSignup(event) {
 
         elements.loginNickname.value = payload.nickname;
         elements.signupForm.reset();
-        showToast("회원가입이 완료되었습니다. 이제 로그인하세요.");
+        showToast("회원가입이 완료되었습니다. 이제 로그인해 주세요.");
     } catch (error) {
         showToast(error.message);
     }
@@ -165,7 +165,7 @@ async function handleLogout() {
         clearSessionState();
         await loadPublicSnapshots();
         showAuthSection();
-        showToast("로그아웃되었습니다.");
+        showToast("로그아웃했습니다.");
         state.manualDisconnect = false;
     }
 }
@@ -179,7 +179,7 @@ function handleSendChat(event) {
     }
 
     if (!state.connected || !state.stompClient || !state.stompClient.connected) {
-        showToast("WebSocket 연결이 아직 준비되지 않았습니다. 잠시 후 다시 시도하세요.");
+        showToast("WebSocket 연결이 아직 준비되지 않았습니다. 잠시 후 다시 시도해 주세요.");
         return;
     }
 
@@ -224,6 +224,10 @@ async function loadInitialSnapshots() {
 }
 
 function connectWebSocket() {
+    connectWebSocketWithFallback(false);
+}
+
+function connectWebSocketWithFallback(useSockJsFallback) {
     if (!state.sessionToken || state.connected) {
         return;
     }
@@ -231,7 +235,6 @@ function connectWebSocket() {
     setConnectionStatus("연결 중", "connecting");
 
     const client = new StompJs.Client({
-        webSocketFactory: () => new SockJS("/ws"),
         connectHeaders: {
             sessionToken: state.sessionToken
         },
@@ -246,7 +249,7 @@ function connectWebSocket() {
             }
 
             setConnectionStatus("연결됨", "online");
-            updateSessionStateText("실시간 접속 중");
+            updateSessionStateText("현재 접속 중");
             subscribeTopics(client);
             sendHeartbeat();
             startHeartbeat();
@@ -257,8 +260,13 @@ function connectWebSocket() {
             handleUnexpectedDisconnect(frame.headers.message || "실시간 연결 중 오류가 발생했습니다.");
         },
         onWebSocketClose: () => {
+            if (!state.connected && !state.manualDisconnect && !useSockJsFallback) {
+                connectWebSocketWithFallback(true);
+                return;
+            }
+
             if (!state.manualDisconnect) {
-                handleUnexpectedDisconnect("연결이 종료되어 세션을 정리했습니다. 다시 로그인해주세요.");
+                handleUnexpectedDisconnect("연결이 종료되어 세션을 정리했습니다. 다시 로그인해 주세요.");
             }
         },
         onWebSocketError: () => {
@@ -266,8 +274,19 @@ function connectWebSocket() {
         }
     });
 
+    if (useSockJsFallback) {
+        client.webSocketFactory = () => new SockJS("/ws");
+    } else {
+        client.brokerURL = buildNativeWsUrl();
+    }
+
     state.stompClient = client;
     client.activate();
+}
+
+function buildNativeWsUrl() {
+    const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+    return `${protocol}://${window.location.host}/ws-native`;
 }
 
 function subscribeTopics(client) {
@@ -474,7 +493,7 @@ function buildChatRow(message) {
 function renderEmptyChat() {
     elements.chatMessages.innerHTML = `
         <div class="empty-box" id="emptyChatBox">
-            아직 저장된 채팅이 없습니다. 첫 번째 메시지를 남겨보세요.
+            아직 저장된 채팅이 없습니다. 첫 메시지를 남겨보세요.
         </div>
     `;
 }
@@ -492,7 +511,7 @@ function renderRanking(rankings, updatedAt = Date.now()) {
 
     if (state.rankingItems.length === 0) {
         elements.rankingList.innerHTML = `
-            <li class="empty-box">아직 집계된 랭킹이 없습니다. 첫 접속 기록을 남겨보세요.</li>
+            <li class="empty-box">아직 집계된 순위가 없습니다. 첫 접속 기록을 남겨보세요.</li>
         `;
         updateMyRankText();
         return;
@@ -793,3 +812,5 @@ function escapeHtml(value) {
         .replaceAll("\"", "&quot;")
         .replaceAll("'", "&#39;");
 }
+
+

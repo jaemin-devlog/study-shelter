@@ -5,11 +5,11 @@ import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
-import org.springframework.web.socket.config.annotation.WebSocketTransportRegistration;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
+import org.springframework.web.socket.config.annotation.WebSocketTransportRegistration;
 
 /**
- * /ws SockJS 엔드포인트와 STOMP 브로커 설정을 담당합니다.
+ * 기본은 native WebSocket, 필요 시 SockJS fallback 을 함께 제공한다.
  */
 @Configuration
 @EnableWebSocketMessageBroker
@@ -23,6 +23,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
+        registry.addEndpoint("/ws-native");
         registry.addEndpoint("/ws").withSockJS();
     }
 
