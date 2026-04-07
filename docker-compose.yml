@@ -4,8 +4,6 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: study-shelter-app
-    env_file:
-      - .env
     depends_on:
       mysql:
         condition: service_healthy
@@ -29,8 +27,6 @@ services:
   mysql:
     image: mysql:8.4
     container_name: ddanjit-mysql
-    env_file:
-      - .env
     environment:
       MYSQL_DATABASE: ${MYSQL_DATABASE}
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
@@ -51,8 +47,6 @@ services:
   redis:
     image: redis:7.4-alpine
     container_name: ddanjit-redis
-    env_file:
-      - .env
     command: ["redis-server", "--appendonly", "yes"]
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
