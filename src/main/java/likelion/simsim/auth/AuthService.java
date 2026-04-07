@@ -4,11 +4,9 @@ import likelion.simsim.auth.dto.AuthMeResponse;
 import likelion.simsim.auth.dto.AuthResponse;
 import likelion.simsim.auth.dto.LoginRequest;
 import likelion.simsim.auth.dto.SignupRequest;
-import likelion.simsim.auth.entity.UserAccountEntity;
 import likelion.simsim.auth.entity.UserEntity;
 import likelion.simsim.auth.model.SessionInfo;
 import likelion.simsim.auth.model.UserAccount;
-import likelion.simsim.auth.repository.UserAccountRepository;
 import likelion.simsim.auth.repository.UserRepository;
 import likelion.simsim.common.RedisKeys;
 import likelion.simsim.common.exception.ConflictException;
@@ -34,7 +32,6 @@ public class AuthService {
     private static final String FIELD_CREATED_AT = "createdAt";
 
     private final UserRepository userRepository;
-    private final UserAccountRepository userAccountRepository;
     private final StringRedisTemplate stringRedisTemplate;
     private final PasswordEncoder passwordEncoder;
     private final SessionService sessionService;
@@ -43,7 +40,6 @@ public class AuthService {
 
     public AuthService(
             UserRepository userRepository,
-            UserAccountRepository userAccountRepository,
             StringRedisTemplate stringRedisTemplate,
             PasswordEncoder passwordEncoder,
             SessionService sessionService,
@@ -51,7 +47,6 @@ public class AuthService {
             RankingService rankingService
     ) {
         this.userRepository = userRepository;
-        this.userAccountRepository = userAccountRepository;
         this.stringRedisTemplate = stringRedisTemplate;
         this.passwordEncoder = passwordEncoder;
         this.sessionService = sessionService;
@@ -132,13 +127,6 @@ public class AuthService {
             return mysqlUser;
         }
 
-        Optional<UserAccount> legacyMysqlUser = userAccountRepository.findById(nickname)
-                .map(this::toUserAccount);
-        if (legacyMysqlUser.isPresent()) {
-            legacyMysqlUser.ifPresent(this::migrateLegacyUserTableToUsers);
-            return legacyMysqlUser;
-        }
-
         Optional<UserAccount> legacyUser = findLegacyRedisUser(nickname);
         legacyUser.ifPresent(this::migrateLegacyUserToMysql);
         return legacyUser;
@@ -175,29 +163,7 @@ public class AuthService {
         ));
     }
 
-    private void migrateLegacyUserTableToUsers(UserAccount userAccount) {
-        if (userRepository.existsById(userAccount.nickname())) {
-            return;
-        }
-
-        userRepository.save(new UserEntity(
-                userAccount.nickname(),
-                userAccount.passwordHash(),
-                userAccount.school(),
-                userAccount.createdAt()
-        ));
-    }
-
     private UserAccount toUserAccount(UserEntity entity) {
-        return new UserAccount(
-                entity.getNickname(),
-                entity.getPasswordHash(),
-                entity.getSchool(),
-                entity.getCreatedAt()
-        );
-    }
-
-    private UserAccount toUserAccount(UserAccountEntity entity) {
         return new UserAccount(
                 entity.getNickname(),
                 entity.getPasswordHash(),
