@@ -451,7 +451,7 @@ textarea {
 
 .app-layout {
     display: grid;
-    grid-template-columns: 250px minmax(0, 1fr) 320px;
+    grid-template-columns: 276px minmax(0, 1fr) 308px;
     gap: 16px;
     min-height: 500px;
     height: 100%;
@@ -671,6 +671,19 @@ button:active {
     overflow-y: auto;
 }
 
+.profile-panel .panel-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.profile-panel .panel-title-row h2 {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    line-height: 1;
+}
+
 .my-time-card {
     margin-bottom: 12px;
     padding: 16px;
@@ -688,18 +701,19 @@ button:active {
 
 .time-card-label {
     margin-bottom: 10px;
-    font-size: 0.88rem;
+    font-size: 0.82rem;
     font-weight: 800;
     opacity: 0.92;
+    white-space: nowrap;
 }
 
 .my-time-card strong {
     display: block;
     margin-bottom: 6px;
-    font-size: 1.52rem;
+    font-size: 1.34rem;
     line-height: 1.04;
     font-family: "Jua", "Pretendard", sans-serif;
-    letter-spacing: -0.03em;
+    letter-spacing: -0.06em;
     white-space: nowrap;
     word-break: keep-all;
     font-variant-numeric: tabular-nums;
@@ -736,6 +750,57 @@ button:active {
     font-weight: 800;
     word-break: keep-all;
     overflow-wrap: normal;
+}
+
+.profile-panel,
+.chat-messages,
+.ranking-list,
+.online-users-list,
+.feedback-list,
+.feedback-form textarea {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(126, 89, 50, 0.86) rgba(255, 246, 229, 0.72);
+}
+
+.profile-panel::-webkit-scrollbar,
+.chat-messages::-webkit-scrollbar,
+.ranking-list::-webkit-scrollbar,
+.online-users-list::-webkit-scrollbar,
+.feedback-list::-webkit-scrollbar,
+.feedback-form textarea::-webkit-scrollbar {
+    width: 12px;
+}
+
+.profile-panel::-webkit-scrollbar-track,
+.chat-messages::-webkit-scrollbar-track,
+.ranking-list::-webkit-scrollbar-track,
+.online-users-list::-webkit-scrollbar-track,
+.feedback-list::-webkit-scrollbar-track,
+.feedback-form textarea::-webkit-scrollbar-track {
+    border-radius: 999px;
+    background: linear-gradient(180deg, rgba(255, 251, 241, 0.98), rgba(241, 222, 182, 0.92));
+    box-shadow: inset 0 0 0 2px rgba(120, 85, 47, 0.12);
+}
+
+.profile-panel::-webkit-scrollbar-thumb,
+.chat-messages::-webkit-scrollbar-thumb,
+.ranking-list::-webkit-scrollbar-thumb,
+.online-users-list::-webkit-scrollbar-thumb,
+.feedback-list::-webkit-scrollbar-thumb,
+.feedback-form textarea::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    border: 2px solid rgba(255, 248, 235, 0.98);
+    background: linear-gradient(180deg, rgba(170, 129, 74, 0.98), rgba(120, 84, 45, 0.98));
+    box-shadow: inset 0 1px 0 rgba(255, 241, 216, 0.42);
+}
+
+.profile-panel::-webkit-scrollbar-thumb:hover,
+.chat-messages::-webkit-scrollbar-thumb:hover,
+.ranking-list::-webkit-scrollbar-thumb:hover,
+.online-users-list::-webkit-scrollbar-thumb:hover,
+.feedback-list::-webkit-scrollbar-thumb:hover,
+.feedback-form textarea::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, rgba(152, 112, 61, 0.98), rgba(100, 68, 38, 0.98));
 }
 
 .notice-box {
@@ -1448,7 +1513,7 @@ button:active {
     }
 
     .app-layout {
-        grid-template-columns: 228px minmax(0, 1fr) 290px;
+        grid-template-columns: 252px minmax(0, 1fr) 282px;
     }
 
     .auth-grid {
@@ -1494,12 +1559,12 @@ button:active {
     }
 
     .app-layout {
-        grid-template-columns: 218px minmax(0, 1fr) 286px;
+        grid-template-columns: 240px minmax(0, 1fr) 274px;
         gap: 14px;
     }
 
     .my-time-card strong {
-        font-size: 1.46rem;
+        font-size: 1.24rem;
     }
 
     .chat-messages {
@@ -1681,7 +1746,7 @@ button:active {
     }
 
     .my-time-card strong {
-        font-size: 1.34rem;
+        font-size: 1.16rem;
     }
 
     .chat-messages {
