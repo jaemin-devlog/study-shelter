@@ -10,7 +10,7 @@ if [[ ! -f "ss.env" ]]; then
 fi
 
 echo "[deploy] starting docker compose deployment"
-docker compose --env-file ss.env up -d --build
+docker compose --env-file ss.env up -d --build --wait
 
 echo "[deploy] current service status"
 docker compose --env-file ss.env ps

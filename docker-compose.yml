@@ -11,14 +11,12 @@ services:
         condition: service_healthy
     environment:
       SPRING_PROFILES_ACTIVE: prod
-      MYSQL_HOST: ${MYSQL_HOST}
-      MYSQL_PORT: ${MYSQL_PORT}
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQL_USERNAME: ${MYSQL_USERNAME}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-      REDIS_HOST: ${REDIS_HOST}
-      REDIS_PORT: ${REDIS_PORT}
-      JPA_DDL_AUTO: ${JPA_DDL_AUTO}
+      SPRING_DATASOURCE_URL: jdbc:mysql://${MYSQL_HOST:-mysql}:${MYSQL_PORT:-3306}/${MYSQL_DATABASE:-ddanjit}?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USERNAME:-ddanjit_user}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD}
+      SPRING_DATA_REDIS_HOST: ${REDIS_HOST:-redis}
+      SPRING_DATA_REDIS_PORT: ${REDIS_PORT:-6379}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: ${JPA_DDL_AUTO:-update}
       TZ: Asia/Seoul
     ports:
       - "127.0.0.1:8081:8080"
@@ -28,9 +26,9 @@ services:
     image: mysql:8.4
     container_name: ddanjit-mysql
     environment:
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-ddanjit}
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_USER: ${MYSQL_USERNAME}
+      MYSQL_USER: ${MYSQL_USERNAME:-ddanjit_user}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
       TZ: Asia/Seoul
     command:
