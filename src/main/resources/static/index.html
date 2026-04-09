@@ -59,8 +59,8 @@
                         <div>
                             <h2>공부하기 싫은 사람들의 실시간 대피소</h2>
                             <p>
-                                시험기간에 집중이 안 될 때 잠깐 모여서 쉬어갈 수 있는 익명 공간입니다.
-                                닉네임과 학교만으로 가볍게 입장해서 다른 사람들과 실시간으로 이야기할 수 있습니다.
+                                시험기간에 집중이 안 될 때 잠깐 모여 쉬어갈 수 있는 익명 공간입니다.
+                                닉네임과 학교만 정하면 바로 입장해서 다른 사람들과 실시간으로 대화할 수 있습니다.
                             </p>
                         </div>
 
@@ -71,13 +71,13 @@
                         </div>
 
                         <div class="intro-card">
-                            <strong>이런 곳이에요</strong>
-                            <p>나만 안 하는 거 아니에요. 여기 실시간 인원수 보세요. 동료가 이렇게나 많습니다ㅎㅎ </p>
+                            <strong>학업대피소에서는</strong>
+                            <p>익명 채팅, 2048 게임, 누적 랭킹을 함께 즐길 수 있습니다.</p>
                         </div>
 
                         <div class="intro-card intro-card--soft">
-                            <strong>같이 쉬어가기</strong>
-                            <p>여기는 '미래의 나'에게 모든 걸 맡긴 용감한 자들의 쉼터입니다.</p>
+                            <strong>로그인 후 이용 가능</strong>
+                            <p>채팅과 2048 게임, 점수 랭킹과 공유 기능은 로그인 후 바로 사용할 수 있습니다.</p>
                         </div>
                     </section>
 
@@ -87,7 +87,7 @@
                             <form id="loginForm" class="form-stack">
                                 <label>
                                     <span>닉네임</span>
-                                    <input id="loginNickname" type="text" maxlength="20" placeholder="예: 밤샘러" required>
+                                    <input id="loginNickname" type="text" maxlength="20" placeholder="예: 밤샐러" required>
                                 </label>
                                 <label>
                                     <span>비밀번호</span>
@@ -97,7 +97,7 @@
                             </form>
                         </div>
                         <p class="helper-text">
-                            로그인하면 현재 접속 인원, 저장된 채팅, 전체 랭킹이 바로 함께 갱신됩니다.
+                            로그인하면 현재 접속 인원, 저장된 채팅, 전체 랭킹과 2048 점수 랭킹이 바로 갱신됩니다.
                         </p>
                     </section>
 
@@ -121,7 +121,7 @@
                             </form>
                         </div>
                         <p class="helper-text">
-                            실명, 학번, 이메일 없이 닉네임과 비밀번호, 학교만 저장합니다.
+                            이메일 없이 닉네임, 비밀번호, 학교 정보만으로 빠르게 시작할 수 있습니다.
                         </p>
                     </section>
                 </div>
@@ -154,13 +154,13 @@
                             </div>
                             <div>
                                 <dt>현재 순위</dt>
-                                <dd id="myRankText">집계 중</dd>
+                                <dd id="myRankText">집계 전</dd>
                             </div>
                         </dl>
 
                         <div class="notice-box">
                             <strong>안내</strong>
-                            <p>현재 화면은 한 판 안에서 고정되고, 채팅과 랭킹 영역만 내부 스크롤됩니다.</p>
+                            <p>현재 화면은 한 판 안에서 고정되고, 채팅과 랭킹 영역만 내부 스크롤로 움직입니다.</p>
                             <p>시험기간을 피해 잠깐 자유롭게 떠들고 쉬어갈 수 있는 공간입니다.</p>
                         </div>
                     </aside>
@@ -197,7 +197,7 @@
             <div class="modal-header">
                 <div>
                     <h2 id="onlineUsersTitle">현재 접속 명단</h2>
-                    <p class="modal-description">지금 학업대피소에 머물고 있는 사람들입니다.</p>
+                    <p class="modal-description">지금 학업대피소에 머무르고 있는 사람들입니다.</p>
                 </div>
                 <button type="button" class="ghost-btn modal-close" id="closeOnlineUsersModal">닫기</button>
             </div>
@@ -215,6 +215,7 @@
                 </div>
                 <div class="game-modal-actions">
                     <button type="button" class="ghost-btn" id="restart2048Button">다시 시작</button>
+                    <button type="button" class="ghost-btn" id="share2048Button">채팅방에 공유</button>
                     <button type="button" class="ghost-btn modal-close" id="closeGame2048Modal">닫기</button>
                 </div>
             </div>
@@ -224,11 +225,23 @@
                     <span>현재 점수</span>
                     <strong id="game2048Score">0</strong>
                 </div>
+                <div class="game2048-score-box">
+                    <span>내 최고 점수</span>
+                    <strong id="game2048BestScore">0</strong>
+                </div>
                 <p id="game2048Status" class="game2048-status">로그인 후 게임을 열면 시간과 채팅은 그대로 유지됩니다.</p>
             </div>
 
             <div class="game2048-board-shell" id="game2048BoardShell">
                 <div id="game2048Grid" class="game2048-grid" aria-label="2048 game board"></div>
+            </div>
+
+            <div class="game2048-ranking-panel">
+                <div class="panel-title-row game2048-ranking-title">
+                    <h2>2048 점수 랭킹</h2>
+                    <span class="subtle-text" id="game2048MyRank">개인 기록 확인 중</span>
+                </div>
+                <ol id="game2048RankingList" class="game2048-ranking-list"></ol>
             </div>
         </div>
     </div>
