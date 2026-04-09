@@ -1368,6 +1368,7 @@ button:active {
 }
 
 .game2048-board-shell {
+    margin-top: 16px;
     padding: 14px;
     border-radius: 28px;
     border: 3px solid rgba(79, 55, 35, 0.9);
