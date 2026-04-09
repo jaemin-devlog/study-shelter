@@ -1370,6 +1370,8 @@ button:active {
 .game2048-board-shell {
     margin-top: 20px;
     padding: 14px;
+    min-height: 500px; /* 원하는 전체 높이를 숫자로 지정 */
+
     border-radius: 28px;
     border: 3px solid rgba(79, 55, 35, 0.9);
     background: linear-gradient(180deg, rgba(255, 249, 238, 0.96), rgba(255, 242, 216, 0.96));
