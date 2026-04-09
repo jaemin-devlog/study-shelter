@@ -1315,6 +1315,9 @@ button:active {
 
 .game-modal-card {
     width: min(560px, 100%);
+    max-height: min(92vh, 980px);
+    padding-bottom: 28px;
+    overflow-y: auto;
 }
 
 .game-modal-header {
@@ -1369,13 +1372,11 @@ button:active {
 
 .game2048-board-shell {
     margin-top: 20px;
-    padding: 14px 14px 24px 14px; /* 아래쪽 여백(Padding)을 24px 정도로 넉넉히 줌 */
+    /* 아래쪽 패딩을 40px 정도로 늘려서 바닥에 여유를 줍니다 */
+    padding: 14px 14px 40px 14px;
 
-    /* 핵심 수정 사항: 높이를 고정하지 않고 자동으로 설정 */
-    height: auto;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
+    /* 500px은 너무 작습니다. 700px~750px 정도로 늘려보세요 */
+    min-height: 720px;
 
     border-radius: 28px;
     border: 3px solid rgba(79, 55, 35, 0.9);
@@ -1614,6 +1615,18 @@ button:active {
     border-radius: 999px;
     border: 3px solid var(--line);
     background: linear-gradient(180deg, #fff8f0 0 22%, #ff8c74 22% 45%, #50ccd4 45% 68%, #ffd56e 68% 100%);
+}
+
+.game-modal-card {
+    max-height: min(92vh, 980px);
+    padding-bottom: 28px;
+    overflow-y: auto;
+}
+
+.game2048-board-shell {
+    margin-top: 18px;
+    padding: 14px;
+    min-height: 0;
 }
 
 .hidden {
