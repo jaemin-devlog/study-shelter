@@ -275,9 +275,13 @@ textarea {
 }
 
 .top-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     padding: 10px 18px;
     font-weight: 900;
     font-size: 0.95rem;
+    text-align: center;
 }
 
 .top-pill--muted {
@@ -2117,5 +2121,360 @@ button:active {
     .shore-icon--shell,
     .shore-icon--star {
         display: none;
+    }
+}
+
+.mobile-app-switcher {
+    display: none;
+}
+
+.mobile-app-switcher__button {
+    border-radius: 18px;
+    border: 3px solid rgba(79, 55, 35, 0.16);
+    background: rgba(255, 255, 255, 0.82);
+    color: var(--ink);
+    font-size: 0.95rem;
+    font-weight: 900;
+    box-shadow: 0 8px 18px rgba(49, 114, 128, 0.08);
+}
+
+.mobile-app-switcher__button.is-active {
+    background: linear-gradient(180deg, #ffd96f, #efb94a);
+    border-color: rgba(79, 55, 35, 0.96);
+}
+
+.game2048-board-shell,
+.breakout-canvas {
+    touch-action: none;
+}
+
+@media (max-width: 980px) {
+    .scene-shell {
+        padding: calc(env(safe-area-inset-top, 0px) + 14px) 12px 106px;
+        overflow: visible;
+    }
+
+    .scene-shell::after {
+        height: 92px;
+    }
+
+    .floating-note,
+    .cloud-2,
+    .cloud-3,
+    .island {
+        display: none;
+    }
+
+    .sun {
+        top: 84px;
+        right: 4%;
+        width: 104px;
+        height: 104px;
+    }
+
+    .top-strip {
+        gap: 10px;
+        align-items: stretch;
+    }
+
+    .top-pills,
+    .top-status {
+        width: 100%;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+    }
+
+    .top-pills > *,
+    .top-status > * {
+        width: 100%;
+        min-width: 0;
+        justify-content: center;
+    }
+
+    .top-pill,
+    .feedback-link-button,
+    .game-link-button,
+    .stat-pill,
+    .stat-pill--button {
+        padding: 10px 12px;
+        font-size: 0.86rem;
+    }
+
+    .stage {
+        padding-top: 16px;
+    }
+
+    .hero {
+        max-width: none;
+        padding: 0 4px;
+    }
+
+    .stage-caption {
+        font-size: 0.84rem;
+    }
+
+    .stage-title {
+        font-size: clamp(2.5rem, 13vw, 4rem);
+        line-height: 1;
+        letter-spacing: 0.03em;
+    }
+
+    .stage-description {
+        max-width: none;
+        font-size: 0.88rem;
+        line-height: 1.48;
+    }
+
+    .beach-board,
+    .feedback-board {
+        width: 100%;
+        margin-top: 14px;
+        padding: 18px 10px 10px;
+        border-radius: 26px;
+    }
+
+    .beach-board::before,
+    .feedback-board::before {
+        left: 12px;
+        right: 12px;
+        top: -14px;
+        height: 30px;
+    }
+
+    .auth-grid,
+    .feedback-layout {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .board-intro,
+    .panel {
+        padding: 14px;
+        border-radius: 22px;
+    }
+
+    .board-intro h2,
+    .panel h2 {
+        font-size: 1.42rem;
+    }
+
+    .intro-badges {
+        gap: 8px;
+    }
+
+    .intro-badge {
+        flex: 1 1 calc(50% - 8px);
+        text-align: center;
+    }
+
+    .feedback-list {
+        min-height: 0;
+        max-height: min(52dvh, 480px);
+    }
+
+    .beach-board--app {
+        height: auto !important;
+        max-height: none !important;
+        overflow: visible;
+        padding-bottom: 12px;
+    }
+
+    .mobile-app-switcher {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+        margin-bottom: 10px;
+    }
+
+    .app-layout {
+        display: block;
+        min-height: 0;
+        height: auto;
+    }
+
+    #appSection .app-layout > .profile-panel,
+    #appSection .app-layout > .chat-panel,
+    #appSection .app-layout > .ranking-panel {
+        display: none;
+    }
+
+    #appSection[data-mobile-panel="chat"] .chat-panel,
+    #appSection[data-mobile-panel="profile"] .profile-panel,
+    #appSection[data-mobile-panel="ranking"] .ranking-panel {
+        display: flex;
+    }
+
+    .profile-panel,
+    .ranking-panel {
+        max-height: min(56dvh, 520px);
+        overflow-y: auto;
+    }
+
+    .profile-panel .panel-title-row {
+        flex-wrap: wrap;
+    }
+
+    .chat-panel {
+        min-height: 0;
+        overflow: visible;
+    }
+
+    .chat-messages {
+        min-height: min(46dvh, 380px);
+        max-height: min(52dvh, 440px);
+        padding: 14px 12px;
+    }
+
+    .chat-form {
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 8px;
+        margin-top: 10px;
+    }
+
+    .chat-form button {
+        min-width: 92px;
+    }
+
+    .ranking-list {
+        max-height: min(48dvh, 440px);
+    }
+
+    .modal {
+        padding: 12px;
+        align-items: flex-start;
+        overflow-y: auto;
+    }
+
+    .modal-card,
+    .game-modal-card,
+    .breakout-modal-card {
+        width: min(100%, 520px);
+        max-height: calc(100dvh - 24px);
+        margin: 0 auto;
+        padding: 16px;
+        border-radius: 24px;
+        overflow-y: auto;
+    }
+
+    .modal-header,
+    .game-modal-header,
+    .breakout-modal-header {
+        grid-template-columns: 1fr;
+    }
+
+    .game-modal-actions,
+    .breakout-modal-actions {
+        justify-content: flex-start;
+    }
+
+    .game2048-summary,
+    .breakout-summary {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .game2048-score-box,
+    .breakout-score-box {
+        max-width: 170px;
+    }
+
+    .game2048-board-shell {
+        margin-top: 10px;
+        padding: 10px;
+        min-height: 0;
+    }
+
+    .game2048-grid {
+        gap: 8px;
+        padding: 8px;
+    }
+
+    .breakout-canvas-shell {
+        margin-top: 6px;
+        padding: 8px;
+    }
+
+    .breakout-canvas {
+        width: 100%;
+        max-width: 100%;
+        height: auto;
+    }
+
+    .breakout-guide {
+        font-size: 0.86rem;
+        line-height: 1.42;
+    }
+}
+
+@media (max-width: 720px) {
+    .top-pills,
+    .top-status {
+        grid-template-columns: 1fr;
+    }
+
+    .intro-badge {
+        flex-basis: 100%;
+    }
+
+    .chat-bubble-wrap {
+        max-width: 92%;
+    }
+
+    .chat-messages {
+        min-height: min(42dvh, 340px);
+        max-height: min(48dvh, 400px);
+    }
+
+    .profile-panel,
+    .ranking-panel,
+    .feedback-list {
+        max-height: none;
+    }
+}
+
+@media (max-width: 560px) {
+    .scene-shell {
+        padding-inline: 10px;
+        padding-bottom: 102px;
+    }
+
+    .top-pill,
+    .feedback-link-button,
+    .game-link-button,
+    .stat-pill,
+    .stat-pill--button {
+        font-size: 0.82rem;
+    }
+
+    .beach-board,
+    .feedback-board {
+        padding: 18px 8px 10px;
+    }
+
+    .panel,
+    .board-intro {
+        padding: 12px;
+    }
+
+    .my-time-card strong {
+        font-size: 1.08rem;
+    }
+
+    .chat-form {
+        grid-template-columns: 1fr;
+    }
+
+    .chat-form button {
+        width: 100%;
+    }
+
+    .mobile-app-switcher__button {
+        font-size: 0.84rem;
+        padding: 10px 8px;
+    }
+
+    .modal {
+        padding: 10px;
     }
 }

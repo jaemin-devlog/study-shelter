@@ -6,6 +6,7 @@ const state = {
     me: null,
     stompClient: null,
     connected: false,
+    activeMobilePanel: "chat",
     manualDisconnect: false,
     heartbeatTimerId: null,
     uiTickerId: null,
@@ -57,6 +58,9 @@ function logRealtime(event, payload = {}) {
 const elements = {
     authSection: document.getElementById("authSection"),
     appSection: document.getElementById("appSection"),
+    appLayout: document.querySelector(".app-layout"),
+    profilePanel: document.querySelector(".profile-panel"),
+    rankingPanel: document.querySelector(".ranking-panel"),
     chatPanel: document.getElementById("chatPanel"),
     loginForm: document.getElementById("loginForm"),
     signupForm: document.getElementById("signupForm"),
@@ -84,6 +88,7 @@ const elements = {
     breakoutCanvas: document.getElementById("breakoutCanvas"),
     breakoutScore: document.getElementById("breakoutScore"),
     breakoutStatus: document.getElementById("breakoutStatus"),
+    breakoutGuide: document.querySelector(".breakout-guide"),
     onlineUsersButton: document.getElementById("onlineUsersButton"),
     onlineUsersModal: document.getElementById("onlineUsersModal"),
     onlineUsersBackdrop: document.getElementById("onlineUsersBackdrop"),
@@ -106,7 +111,9 @@ const elements = {
 };
 
 document.addEventListener("DOMContentLoaded", async () => {
+    createMobileAppSwitcher();
     bindEvents();
+    syncResponsiveLayout();
     startUiTicker();
     renderEmptyChat();
     renderRanking([]);
@@ -137,11 +144,114 @@ function bindEvents() {
     elements.breakoutRestartButton?.addEventListener("click", restartBreakoutGame);
     elements.game2048BoardShell?.addEventListener("touchstart", handleGame2048TouchStart, {passive: true});
     elements.game2048BoardShell?.addEventListener("touchend", handleGame2048TouchEnd, {passive: true});
+    elements.breakoutCanvas?.addEventListener("touchstart", handleBreakoutTouchStart, {passive: false});
+    elements.breakoutCanvas?.addEventListener("touchmove", handleBreakoutTouchMove, {passive: false});
+    elements.breakoutCanvas?.addEventListener("touchend", handleBreakoutTouchEnd, {passive: true});
     elements.onlineUsersButton?.addEventListener("click", openOnlineUsersModal);
     elements.closeOnlineUsersModal?.addEventListener("click", closeOnlineUsersModal);
     elements.onlineUsersBackdrop?.addEventListener("click", closeOnlineUsersModal);
     document.addEventListener("keydown", handleGlobalKeydown);
     document.addEventListener("keyup", handleGlobalKeyup);
+    window.addEventListener("resize", handleViewportResize, {passive: true});
+}
+
+function createMobileAppSwitcher() {
+    if (!elements.appSection || !elements.appLayout || document.getElementById("mobileAppSwitcher")) {
+        return;
+    }
+
+    const switcher = document.createElement("div");
+    switcher.id = "mobileAppSwitcher";
+    switcher.className = "mobile-app-switcher hidden";
+    switcher.innerHTML = `
+        <button type="button" class="mobile-app-switcher__button is-active" data-panel="chat">채팅</button>
+        <button type="button" class="mobile-app-switcher__button" data-panel="profile">내 상태</button>
+        <button type="button" class="mobile-app-switcher__button" data-panel="ranking">랭킹</button>
+    `;
+
+    switcher.querySelectorAll("[data-panel]").forEach((button) => {
+        button.addEventListener("click", () => {
+            setActiveMobilePanel(button.dataset.panel || "chat", {updateHash: true});
+        });
+    });
+
+    elements.appLayout.parentElement?.insertBefore(switcher, elements.appLayout);
+    elements.mobileAppSwitcher = switcher;
+}
+
+function handleViewportResize() {
+    syncResponsiveLayout();
+
+    if (!elements.breakoutModal?.classList.contains("hidden")) {
+        renderBreakoutGame();
+    }
+}
+
+function isMobileViewport() {
+    return window.matchMedia("(max-width: 980px)").matches;
+}
+
+function syncResponsiveLayout() {
+    updateBreakoutGuideText();
+
+    if (!elements.appSection || !elements.mobileAppSwitcher) {
+        return;
+    }
+
+    if (!isMobileViewport()) {
+        elements.mobileAppSwitcher.classList.add("hidden");
+        delete elements.appSection.dataset.mobilePanel;
+        return;
+    }
+
+    elements.mobileAppSwitcher.classList.remove("hidden");
+    setActiveMobilePanel(resolveInitialMobilePanel(), {updateHash: false});
+}
+
+function resolveInitialMobilePanel() {
+    if (window.location.hash === "#ranking") {
+        return "ranking";
+    }
+
+    if (window.location.hash === "#profile") {
+        return "profile";
+    }
+
+    return state.activeMobilePanel || "chat";
+}
+
+function setActiveMobilePanel(panel, options = {}) {
+    const nextPanel = ["chat", "profile", "ranking"].includes(panel) ? panel : "chat";
+    state.activeMobilePanel = nextPanel;
+
+    if (!elements.appSection) {
+        return;
+    }
+
+    if (isMobileViewport()) {
+        elements.appSection.dataset.mobilePanel = nextPanel;
+    }
+
+    elements.mobileAppSwitcher?.querySelectorAll("[data-panel]").forEach((button) => {
+        const isActive = button.dataset.panel === nextPanel;
+        button.classList.toggle("is-active", isActive);
+        button.setAttribute("aria-pressed", String(isActive));
+    });
+
+    if (options.updateHash) {
+        const hash = nextPanel === "chat" ? "#chat" : `#${nextPanel}`;
+        history.replaceState(null, "", `${window.location.pathname}${hash}`);
+    }
+}
+
+function updateBreakoutGuideText() {
+    if (!elements.breakoutGuide) {
+        return;
+    }
+
+    elements.breakoutGuide.textContent = isMobileViewport()
+        ? "조작: 패들을 손가락으로 좌우로 밀어서 움직일 수 있습니다. 팝업을 닫아도 현재 상태는 그대로 유지됩니다."
+        : "조작: 좌우 방향키로 패들을 움직입니다. 팝업을 닫아도 현재 상태는 그대로 유지됩니다.";
 }
 
 async function restoreSession() {
@@ -670,6 +780,52 @@ function handleGame2048TouchEnd(event) {
     }
 
     move2048(deltaY > 0 ? "down" : "up");
+}
+
+function handleBreakoutTouchStart(event) {
+    if (elements.breakoutModal?.classList.contains("hidden") || !state.breakout.initialized) {
+        return;
+    }
+
+    syncBreakoutPaddleToTouch(event);
+}
+
+function handleBreakoutTouchMove(event) {
+    if (elements.breakoutModal?.classList.contains("hidden") || !state.breakout.initialized) {
+        return;
+    }
+
+    event.preventDefault();
+    syncBreakoutPaddleToTouch(event);
+}
+
+function handleBreakoutTouchEnd() {
+    state.breakout.paddleDirection = 0;
+    state.breakout.leftPressed = false;
+    state.breakout.rightPressed = false;
+}
+
+function syncBreakoutPaddleToTouch(event) {
+    const touch = event.touches?.[0] || event.changedTouches?.[0];
+    if (!touch || !elements.breakoutCanvas || !state.breakout.paddle) {
+        return;
+    }
+
+    const bounds = elements.breakoutCanvas.getBoundingClientRect();
+    const scaleX = state.breakout.canvasWidth / bounds.width;
+    const touchX = (touch.clientX - bounds.left) * scaleX;
+    const paddle = state.breakout.paddle;
+
+    paddle.x = clamp(
+        touchX - paddle.width / 2,
+        0,
+        state.breakout.canvasWidth - paddle.width
+    );
+
+    state.breakout.paddleDirection = 0;
+    state.breakout.leftPressed = false;
+    state.breakout.rightPressed = false;
+    renderBreakoutGame();
 }
 
 function move2048(direction) {
@@ -1666,6 +1822,8 @@ function showAuthSection() {
 function showAppSection() {
     elements.authSection.classList.add("hidden");
     elements.appSection.classList.remove("hidden");
+    setActiveMobilePanel(resolveInitialMobilePanel(), {updateHash: false});
+    syncResponsiveLayout();
     focusChatPanelIfRequested();
 }
 
@@ -1675,10 +1833,12 @@ function focusChatPanelIfRequested() {
     }
 
     window.requestAnimationFrame(() => {
-        elements.chatPanel?.scrollIntoView({
-            block: "center",
-            behavior: "smooth"
-        });
+        if (!isMobileViewport()) {
+            elements.chatPanel?.scrollIntoView({
+                block: "center",
+                behavior: "smooth"
+            });
+        }
         elements.chatInput?.focus({preventScroll: true});
     });
 }
