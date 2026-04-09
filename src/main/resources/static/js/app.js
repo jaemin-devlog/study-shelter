@@ -147,6 +147,9 @@ function bindEvents() {
     elements.breakoutCanvas?.addEventListener("touchstart", handleBreakoutTouchStart, {passive: false});
     elements.breakoutCanvas?.addEventListener("touchmove", handleBreakoutTouchMove, {passive: false});
     elements.breakoutCanvas?.addEventListener("touchend", handleBreakoutTouchEnd, {passive: true});
+    elements.breakoutCanvas?.addEventListener("mousemove", handleBreakoutMouseMove);
+    elements.breakoutCanvas?.addEventListener("mouseenter", handleBreakoutMouseMove);
+    elements.breakoutCanvas?.addEventListener("mouseleave", handleBreakoutMouseLeave);
     elements.onlineUsersButton?.addEventListener("click", openOnlineUsersModal);
     elements.closeOnlineUsersModal?.addEventListener("click", closeOnlineUsersModal);
     elements.onlineUsersBackdrop?.addEventListener("click", closeOnlineUsersModal);
@@ -251,7 +254,7 @@ function updateBreakoutGuideText() {
 
     elements.breakoutGuide.textContent = isMobileViewport()
         ? "조작: 패들을 손가락으로 좌우로 밀어서 움직일 수 있습니다. 팝업을 닫아도 현재 상태는 그대로 유지됩니다."
-        : "조작: 좌우 방향키로 패들을 움직입니다. 팝업을 닫아도 현재 상태는 그대로 유지됩니다.";
+        : "조작: 마우스 또는 좌우 방향키로 패들을 움직입니다. 팝업을 닫아도 현재 상태는 그대로 유지됩니다.";
 }
 
 async function restoreSession() {
@@ -805,15 +808,37 @@ function handleBreakoutTouchEnd() {
     state.breakout.rightPressed = false;
 }
 
+function handleBreakoutMouseMove(event) {
+    if (isMobileViewport()) {
+        return;
+    }
+
+    syncBreakoutPaddleToClientX(event.clientX);
+}
+
+function handleBreakoutMouseLeave() {
+    state.breakout.paddleDirection = 0;
+    state.breakout.leftPressed = false;
+    state.breakout.rightPressed = false;
+}
+
 function syncBreakoutPaddleToTouch(event) {
     const touch = event.touches?.[0] || event.changedTouches?.[0];
-    if (!touch || !elements.breakoutCanvas || !state.breakout.paddle) {
+    if (!touch) {
+        return;
+    }
+
+    syncBreakoutPaddleToClientX(touch.clientX);
+}
+
+function syncBreakoutPaddleToClientX(clientX) {
+    if (elements.breakoutModal?.classList.contains("hidden") || !elements.breakoutCanvas || !state.breakout.paddle) {
         return;
     }
 
     const bounds = elements.breakoutCanvas.getBoundingClientRect();
     const scaleX = state.breakout.canvasWidth / bounds.width;
-    const touchX = (touch.clientX - bounds.left) * scaleX;
+    const touchX = (clientX - bounds.left) * scaleX;
     const paddle = state.breakout.paddle;
 
     paddle.x = clamp(
@@ -825,7 +850,10 @@ function syncBreakoutPaddleToTouch(event) {
     state.breakout.paddleDirection = 0;
     state.breakout.leftPressed = false;
     state.breakout.rightPressed = false;
-    renderBreakoutGame();
+
+    if (!state.breakout.running) {
+        renderBreakoutGame();
+    }
 }
 
 function move2048(direction) {
