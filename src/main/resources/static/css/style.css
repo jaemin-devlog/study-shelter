@@ -1813,24 +1813,32 @@ button:active {
         flex: 1;
         min-height: 0;
         display: flex;
+        height: 100%;
     }
 
     .beach-board--app {
         flex: 1;
         min-height: 0;
         display: flex;
-        min-height: min(760px, calc(100dvh - 244px));
+        height: min(760px, calc(100dvh - 244px));
+        max-height: min(760px, calc(100dvh - 244px));
+        overflow: hidden;
     }
 
     .beach-board--app .app-layout {
         flex: 1;
-        min-height: inherit;
+        min-height: 0;
+        height: 100%;
     }
 
     .beach-board--app .profile-panel,
     .beach-board--app .chat-panel,
     .beach-board--app .ranking-panel {
         height: 100%;
+    }
+
+    .beach-board--app .chat-messages {
+        min-height: 0;
     }
 }
 

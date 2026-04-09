@@ -98,12 +98,30 @@ public class SessionService {
             return false;
         }
 
-        if (Boolean.TRUE.equals(stringRedisTemplate.hasKey(RedisKeys.sessionKey(mappedToken)))) {
-            return true;
+        Optional<SessionInfo> sessionInfo = findSession(mappedToken);
+        if (sessionInfo.isPresent()) {
+            return sessionInfo.get().isConnected();
         }
 
         stringRedisTemplate.delete(RedisKeys.nicknameSessionKey(nickname));
         return false;
+    }
+
+    public void removeInactiveSessionByNickname(String nickname) {
+        String mappedToken = stringRedisTemplate.opsForValue().get(RedisKeys.nicknameSessionKey(nickname));
+        if (!StringUtils.hasText(mappedToken)) {
+            return;
+        }
+
+        Optional<SessionInfo> sessionInfo = findSession(mappedToken);
+        if (sessionInfo.isEmpty()) {
+            stringRedisTemplate.delete(RedisKeys.nicknameSessionKey(nickname));
+            return;
+        }
+
+        if (!sessionInfo.get().isConnected()) {
+            deleteSession(mappedToken);
+        }
     }
 
     public boolean isTokenAlreadyConnected(String sessionToken) {
@@ -158,6 +176,20 @@ public class SessionService {
             if (StringUtils.hasText(sessionInfo.stompSessionId())) {
                 stringRedisTemplate.delete(RedisKeys.webSocketSessionKey(sessionInfo.stompSessionId()));
             }
+        });
+    }
+
+    public void markDisconnected(String sessionToken) {
+        findSession(sessionToken).ifPresent(sessionInfo -> {
+            String sessionKey = RedisKeys.sessionKey(sessionToken);
+            stringRedisTemplate.opsForHash().put(sessionKey, FIELD_CONNECTED_AT, "0");
+            stringRedisTemplate.opsForHash().put(sessionKey, FIELD_STOMP_SESSION_ID, "");
+
+            if (StringUtils.hasText(sessionInfo.stompSessionId())) {
+                stringRedisTemplate.delete(RedisKeys.webSocketSessionKey(sessionInfo.stompSessionId()));
+            }
+
+            expireSessionRelatedKeys(sessionToken, sessionInfo.nickname(), null);
         });
     }
 

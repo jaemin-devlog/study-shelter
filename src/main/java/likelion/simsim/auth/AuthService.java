@@ -71,7 +71,6 @@ public class AuthService {
         );
 
         userRepository.save(userEntity);
-
         rankingService.initializeUserRecord(userEntity.getNickname(), userEntity.getSchool());
     }
 
@@ -86,8 +85,10 @@ public class AuthService {
             throw new UnauthorizedException("닉네임 또는 비밀번호가 올바르지 않습니다.");
         }
 
+        sessionService.removeInactiveSessionByNickname(nickname);
+
         if (sessionService.hasActiveSessionByNickname(nickname)) {
-            throw new ConflictException("이미 접속 중인 닉네임입니다. 초보자용 단순 정책으로 중복 로그인을 거절합니다.");
+            throw new ConflictException("이미 접속 중인 닉네임입니다. 중복 로그인은 허용되지 않습니다.");
         }
 
         rankingService.initializeUserRecord(userAccount.nickname(), userAccount.school());

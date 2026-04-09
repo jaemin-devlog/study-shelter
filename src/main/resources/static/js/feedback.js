@@ -8,6 +8,7 @@ const feedbackState = {
 
 const feedbackElements = {
     onlineCount: document.getElementById("feedbackOnlineCount"),
+    mainButton: document.getElementById("feedbackMainButton"),
     form: document.getElementById("feedbackForm"),
     nickname: document.getElementById("feedbackNickname"),
     school: document.getElementById("feedbackSchool"),
@@ -18,6 +19,7 @@ const feedbackElements = {
 };
 
 document.addEventListener("DOMContentLoaded", async () => {
+    feedbackElements.mainButton?.addEventListener("click", handleFeedbackMainButtonClick);
     feedbackElements.form?.addEventListener("submit", handleFeedbackSubmit);
     await Promise.all([
         loadOnlineCount(),
@@ -25,6 +27,11 @@ document.addEventListener("DOMContentLoaded", async () => {
         restoreFeedbackUser()
     ]);
 });
+
+function handleFeedbackMainButtonClick(event) {
+    event.preventDefault();
+    window.location.href = feedbackState.sessionToken ? "/index.html#chat" : "/index.html";
+}
 
 async function restoreFeedbackUser() {
     if (!feedbackState.sessionToken) {

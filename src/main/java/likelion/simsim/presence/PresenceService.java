@@ -61,7 +61,7 @@ public class PresenceService {
 
     public void unregisterByWebSocketSessionId(String stompSessionId) {
         sessionService.findTokenByWebSocketSessionId(stompSessionId)
-                .ifPresent(token -> cleanupSession(token, "연결 종료", true));
+                .ifPresent(this::disconnectSession);
     }
 
     public void cleanupSession(String sessionToken, String reason, boolean broadcastSystemMessage) {
@@ -83,15 +83,11 @@ public class PresenceService {
         }
 
         boolean changed = false;
-        List<SessionInfo> removedSessions = new ArrayList<>();
 
         for (String token : staleTokens) {
-            CleanupOutcome outcome = cleanupSessionInternal(token);
+            CleanupOutcome outcome = disconnectSessionInternal(token);
             if (outcome.shouldBroadcast()) {
                 changed = true;
-            }
-            if (outcome.sessionInfo() != null && outcome.sessionInfo().isConnected()) {
-                removedSessions.add(outcome.sessionInfo());
             }
         }
 
@@ -169,6 +165,32 @@ public class PresenceService {
         ));
     }
 
+    private void disconnectSession(String sessionToken) {
+        CleanupOutcome outcome = disconnectSessionInternal(sessionToken);
+        if (!outcome.shouldBroadcast()) {
+            return;
+        }
+
+        broadcastSnapshots();
+    }
+
+    private CleanupOutcome disconnectSessionInternal(String sessionToken) {
+        Optional<SessionInfo> sessionInfoOptional = sessionService.findSession(sessionToken);
+        SessionInfo sessionInfo = sessionInfoOptional.orElse(null);
+
+        Long presenceRemoved = stringRedisTemplate.opsForZSet().remove(RedisKeys.PRESENCE_KEY, sessionToken);
+
+        boolean wasOnline = (presenceRemoved != null && presenceRemoved > 0)
+                || (sessionInfo != null && sessionInfo.isConnected());
+
+        if (sessionInfo != null && sessionInfo.isConnected()) {
+            rankingService.recordDisconnectedSession(sessionInfo);
+            sessionService.markDisconnected(sessionToken);
+        }
+
+        return new CleanupOutcome(wasOnline, sessionInfo);
+    }
+
     private CleanupOutcome cleanupSessionInternal(String sessionToken) {
         Optional<SessionInfo> sessionInfoOptional = sessionService.findSession(sessionToken);
         SessionInfo sessionInfo = sessionInfoOptional.orElse(null);
@@ -189,6 +211,7 @@ public class PresenceService {
 
         return new CleanupOutcome(wasOnline, sessionInfo);
     }
+
     private record CleanupOutcome(
             boolean shouldBroadcast,
             SessionInfo sessionInfo
