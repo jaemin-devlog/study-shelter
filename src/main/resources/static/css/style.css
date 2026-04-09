@@ -1629,6 +1629,35 @@ button:active {
     min-height: 0;
 }
 
+.modal:has(.game-modal-card) {
+    align-items: flex-start;
+    padding-top: 12px;
+    padding-bottom: 12px;
+}
+
+.game-modal-card {
+    width: min(520px, calc(100vw - 32px));
+    align-self: flex-start;
+    margin-top: 8px;
+    max-height: none;
+    padding-bottom: 18px;
+    overflow: visible;
+}
+
+.game2048-summary {
+    gap: 12px;
+}
+
+.game2048-board-shell {
+    margin-top: 12px;
+    padding: 12px;
+}
+
+.game2048-grid {
+    gap: 8px;
+    padding: 8px;
+}
+
 .hidden {
     display: none !important;
 }
