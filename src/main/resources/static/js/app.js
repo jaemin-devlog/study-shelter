@@ -22,6 +22,31 @@ const state = {
         status: "로그인 후 게임을 열 수 있습니다.",
         touchStartX: 0,
         touchStartY: 0
+    },
+    breakout: {
+        initialized: false,
+        running: false,
+        paused: true,
+        started: false,
+        gameOver: false,
+        cleared: false,
+        pauseReason: "idle",
+        score: 0,
+        paddleDirection: 0,
+        leftPressed: false,
+        rightPressed: false,
+        animationFrameId: null,
+        lastTimestamp: 0,
+        canvasWidth: 520,
+        canvasHeight: 420,
+        paddle: null,
+        ball: null,
+        bricks: [],
+        theme: null,
+        brickConfig: null,
+        nextRowSeed: 0,
+        speedIncreaseFactor: 1.0025,
+        maxBallSpeed: 0.46
     }
 };
 
@@ -41,6 +66,7 @@ const elements = {
     chatMessages: document.getElementById("chatMessages"),
     rankingList: document.getElementById("rankingList"),
     game2048Button: document.getElementById("game2048Button"),
+    breakoutButton: document.getElementById("breakoutButton"),
     game2048Modal: document.getElementById("game2048Modal"),
     game2048Backdrop: document.getElementById("game2048Backdrop"),
     closeGame2048Modal: document.getElementById("closeGame2048Modal"),
@@ -49,6 +75,15 @@ const elements = {
     game2048Score: document.getElementById("game2048Score"),
     game2048Status: document.getElementById("game2048Status"),
     game2048BoardShell: document.getElementById("game2048BoardShell"),
+    breakoutModal: document.getElementById("breakoutModal"),
+    breakoutBackdrop: document.getElementById("breakoutBackdrop"),
+    closeBreakoutModal: document.getElementById("closeBreakoutModal"),
+    breakoutStartButton: document.getElementById("breakoutStartButton"),
+    breakoutPauseButton: document.getElementById("breakoutPauseButton"),
+    breakoutRestartButton: document.getElementById("breakoutRestartButton"),
+    breakoutCanvas: document.getElementById("breakoutCanvas"),
+    breakoutScore: document.getElementById("breakoutScore"),
+    breakoutStatus: document.getElementById("breakoutStatus"),
     onlineUsersButton: document.getElementById("onlineUsersButton"),
     onlineUsersModal: document.getElementById("onlineUsersModal"),
     onlineUsersBackdrop: document.getElementById("onlineUsersBackdrop"),
@@ -91,15 +126,22 @@ function bindEvents() {
     elements.logoutButton.addEventListener("click", handleLogout);
     elements.chatForm.addEventListener("submit", handleSendChat);
     elements.game2048Button?.addEventListener("click", openGame2048Modal);
+    elements.breakoutButton?.addEventListener("click", openBreakoutModal);
     elements.closeGame2048Modal?.addEventListener("click", closeGame2048Modal);
     elements.game2048Backdrop?.addEventListener("click", closeGame2048Modal);
     elements.restart2048Button?.addEventListener("click", reset2048Game);
+    elements.closeBreakoutModal?.addEventListener("click", closeBreakoutModalHandler);
+    elements.breakoutBackdrop?.addEventListener("click", closeBreakoutModalHandler);
+    elements.breakoutStartButton?.addEventListener("click", handleBreakoutStartButton);
+    elements.breakoutPauseButton?.addEventListener("click", handleBreakoutPauseButton);
+    elements.breakoutRestartButton?.addEventListener("click", restartBreakoutGame);
     elements.game2048BoardShell?.addEventListener("touchstart", handleGame2048TouchStart, {passive: true});
     elements.game2048BoardShell?.addEventListener("touchend", handleGame2048TouchEnd, {passive: true});
     elements.onlineUsersButton?.addEventListener("click", openOnlineUsersModal);
     elements.closeOnlineUsersModal?.addEventListener("click", closeOnlineUsersModal);
     elements.onlineUsersBackdrop?.addEventListener("click", closeOnlineUsersModal);
     document.addEventListener("keydown", handleGlobalKeydown);
+    document.addEventListener("keyup", handleGlobalKeyup);
 }
 
 async function restoreSession() {
@@ -439,7 +481,24 @@ function handleGlobalKeydown(event) {
     if (event.key === "Escape") {
         closeOnlineUsersModal();
         closeGame2048Modal();
+        closeBreakoutModalHandler();
         return;
+    }
+
+    if (!elements.breakoutModal?.classList.contains("hidden")) {
+        if (event.key === "ArrowLeft") {
+            event.preventDefault();
+            state.breakout.leftPressed = true;
+            state.breakout.paddleDirection = -1;
+            return;
+        }
+
+        if (event.key === "ArrowRight") {
+            event.preventDefault();
+            state.breakout.rightPressed = true;
+            state.breakout.paddleDirection = 1;
+            return;
+        }
     }
 
     if (elements.game2048Modal?.classList.contains("hidden")) {
@@ -461,6 +520,27 @@ function handleGlobalKeydown(event) {
     move2048(direction);
 }
 
+function handleGlobalKeyup(event) {
+    if (elements.breakoutModal?.classList.contains("hidden")) {
+        return;
+    }
+
+    if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") {
+        return;
+    }
+
+    event.preventDefault();
+
+    if (event.key === "ArrowLeft") {
+        state.breakout.leftPressed = false;
+        state.breakout.paddleDirection = state.breakout.rightPressed ? 1 : 0;
+        return;
+    }
+
+    state.breakout.rightPressed = false;
+    state.breakout.paddleDirection = state.breakout.leftPressed ? -1 : 0;
+}
+
 function openGame2048Modal() {
     if (!state.sessionToken || !state.me) {
         showToast("2048 게임은 로그인 후 이용할 수 있어요.");
@@ -469,6 +549,7 @@ function openGame2048Modal() {
     }
 
     closeOnlineUsersModal();
+    closeBreakoutModalHandler();
 
     if (!state.game2048.initialized) {
         reset2048Game();
@@ -481,6 +562,45 @@ function openGame2048Modal() {
 
 function closeGame2048Modal() {
     elements.game2048Modal?.classList.add("hidden");
+}
+
+function openBreakoutModal() {
+    if (!state.sessionToken || !state.me) {
+        showToast("벽돌깨기 게임은 로그인 후 이용할 수 있어요.");
+        elements.loginNickname?.focus();
+        return;
+    }
+
+    closeOnlineUsersModal();
+    closeGame2048Modal();
+
+    if (!state.breakout.initialized) {
+        initializeBreakoutGame();
+    }
+
+    elements.breakoutModal?.classList.remove("hidden");
+
+    if (state.breakout.started && state.breakout.paused && state.breakout.pauseReason === "hidden" && !state.breakout.gameOver && !state.breakout.cleared) {
+        startBreakoutGame();
+        return;
+    }
+
+    renderBreakoutGame();
+}
+
+function closeBreakoutModalHandler() {
+    if (!elements.breakoutModal || elements.breakoutModal.classList.contains("hidden")) {
+        return;
+    }
+
+    if (state.breakout.running) {
+        pauseBreakoutGame("hidden");
+    }
+
+    state.breakout.paddleDirection = 0;
+    state.breakout.leftPressed = false;
+    state.breakout.rightPressed = false;
+    elements.breakoutModal.classList.add("hidden");
 }
 
 function reset2048Game() {
@@ -717,6 +837,496 @@ function canMove2048(board) {
     }
 
     return false;
+}
+
+function initializeBreakoutGame() {
+    state.breakout = {
+        ...state.breakout,
+        initialized: true,
+        theme: readBreakoutTheme()
+    };
+    resetBreakoutGame();
+}
+
+function handleBreakoutStartButton() {
+    startBreakoutGame();
+}
+
+function handleBreakoutPauseButton() {
+    if (state.breakout.running) {
+        pauseBreakoutGame("manual");
+        return;
+    }
+
+    if (state.breakout.started && !state.breakout.gameOver && !state.breakout.cleared) {
+        startBreakoutGame();
+    }
+}
+
+function restartBreakoutGame() {
+    cancelBreakoutAnimation();
+    resetBreakoutGame();
+}
+
+function resetBreakoutGame() {
+    const canvas = elements.breakoutCanvas;
+    if (!canvas) {
+        return;
+    }
+
+    const canvasWidth = canvas.width;
+    const canvasHeight = canvas.height;
+    const paddleWidth = 108;
+    const paddleHeight = 14;
+    const paddleY = canvasHeight - 34;
+    const ballRadius = 10;
+    const theme = readBreakoutTheme();
+    const brickConfig = createBreakoutBrickConfig(canvasWidth, theme);
+    const initialSpeed = 0.377;
+
+    state.breakout = {
+        ...state.breakout,
+        initialized: true,
+        running: false,
+        paused: true,
+        started: false,
+        gameOver: false,
+        cleared: false,
+        pauseReason: "idle",
+        score: 0,
+        paddleDirection: 0,
+        leftPressed: false,
+        rightPressed: false,
+        animationFrameId: null,
+        lastTimestamp: 0,
+        canvasWidth,
+        canvasHeight,
+        paddle: {
+            x: (canvasWidth - paddleWidth) / 2,
+            y: paddleY,
+            width: paddleWidth,
+            height: paddleHeight,
+            speed: 0.62
+        },
+        ball: {
+            x: canvasWidth / 2,
+            y: paddleY - ballRadius - 12,
+            radius: ballRadius,
+            vx: (Math.random() > 0.5 ? 1 : -1) * 0.18,
+            vy: -Math.sqrt(initialSpeed * initialSpeed - 0.18 * 0.18)
+        },
+        bricks: createBreakoutBricks(brickConfig),
+        theme,
+        brickConfig,
+        nextRowSeed: brickConfig.rows
+    };
+
+    state.breakout.status = "게임 시작을 누르면 바로 진행됩니다.";
+    renderBreakoutGame();
+}
+
+function startBreakoutGame() {
+    if (!state.breakout.initialized) {
+        initializeBreakoutGame();
+    }
+
+    if (state.breakout.gameOver || state.breakout.cleared) {
+        resetBreakoutGame();
+    }
+
+    if (state.breakout.running) {
+        return;
+    }
+
+    state.breakout.running = true;
+    state.breakout.paused = false;
+    state.breakout.started = true;
+    state.breakout.pauseReason = "play";
+    state.breakout.lastTimestamp = 0;
+    state.breakout.status = "게임 진행 중";
+    updateBreakoutControls();
+    renderBreakoutGame();
+    state.breakout.animationFrameId = window.requestAnimationFrame(stepBreakoutGame);
+}
+
+function pauseBreakoutGame(reason = "manual") {
+    cancelBreakoutAnimation();
+    state.breakout.running = false;
+    state.breakout.paused = true;
+    state.breakout.pauseReason = reason;
+    state.breakout.lastTimestamp = 0;
+    state.breakout.paddleDirection = 0;
+    state.breakout.leftPressed = false;
+    state.breakout.rightPressed = false;
+
+    if (!state.breakout.gameOver && !state.breakout.cleared && state.breakout.started) {
+        state.breakout.status = reason === "hidden"
+            ? "이어서 플레이할 수 있습니다."
+            : "일시정지됨";
+    }
+
+    updateBreakoutControls();
+    renderBreakoutGame();
+}
+
+function cancelBreakoutAnimation() {
+    if (!state.breakout.animationFrameId) {
+        return;
+    }
+
+    window.cancelAnimationFrame(state.breakout.animationFrameId);
+    state.breakout.animationFrameId = null;
+}
+
+function stepBreakoutGame(timestamp) {
+    if (!state.breakout.running) {
+        return;
+    }
+
+    if (!state.breakout.lastTimestamp) {
+        state.breakout.lastTimestamp = timestamp;
+    }
+
+    const delta = Math.min(timestamp - state.breakout.lastTimestamp, 24);
+    state.breakout.lastTimestamp = timestamp;
+
+    updateBreakoutGame(delta);
+    renderBreakoutGame();
+
+    if (state.breakout.running) {
+        state.breakout.animationFrameId = window.requestAnimationFrame(stepBreakoutGame);
+    }
+}
+
+function updateBreakoutGame(delta) {
+    const {paddle, ball, canvasWidth, canvasHeight} = state.breakout;
+    if (!paddle || !ball) {
+        return;
+    }
+
+    paddle.x += state.breakout.paddleDirection * paddle.speed * delta;
+    paddle.x = clamp(paddle.x, 0, canvasWidth - paddle.width);
+
+    const previousX = ball.x;
+    const previousY = ball.y;
+
+    ball.x += ball.vx * delta;
+    ball.y += ball.vy * delta;
+
+    if (ball.x - ball.radius <= 0) {
+        ball.x = ball.radius;
+        ball.vx = Math.abs(ball.vx);
+    } else if (ball.x + ball.radius >= canvasWidth) {
+        ball.x = canvasWidth - ball.radius;
+        ball.vx = -Math.abs(ball.vx);
+    }
+
+    if (ball.y - ball.radius <= 0) {
+        ball.y = ball.radius;
+        ball.vy = Math.abs(ball.vy);
+    }
+
+    if (
+        ball.vy > 0 &&
+        ball.y + ball.radius >= paddle.y &&
+        ball.y - ball.radius <= paddle.y + paddle.height &&
+        ball.x + ball.radius >= paddle.x &&
+        ball.x - ball.radius <= paddle.x + paddle.width
+    ) {
+        const speed = clamp(Math.hypot(ball.vx, ball.vy), 0.377, state.breakout.maxBallSpeed);
+        const hitRatio = clamp((ball.x - (paddle.x + paddle.width / 2)) / (paddle.width / 2), -1, 1);
+        ball.x = clamp(ball.x, paddle.x + ball.radius, paddle.x + paddle.width - ball.radius);
+        ball.y = paddle.y - ball.radius - 1;
+        ball.vx = speed * hitRatio;
+        ball.vy = -Math.max(0.22, Math.sqrt(Math.max(speed * speed - ball.vx * ball.vx, 0.04)));
+    }
+
+    let collidedBrick = false;
+
+    for (const brick of state.breakout.bricks) {
+        if (!brick.active) {
+            continue;
+        }
+
+        if (
+            ball.x + ball.radius < brick.x ||
+            ball.x - ball.radius > brick.x + brick.width ||
+            ball.y + ball.radius < brick.y ||
+            ball.y - ball.radius > brick.y + brick.height
+        ) {
+            continue;
+        }
+
+        brick.active = false;
+        state.breakout.score += 100;
+
+        const cameFromTop = previousY + ball.radius <= brick.y;
+        const cameFromBottom = previousY - ball.radius >= brick.y + brick.height;
+        const cameFromLeft = previousX + ball.radius <= brick.x;
+        const cameFromRight = previousX - ball.radius >= brick.x + brick.width;
+
+        if (cameFromTop || cameFromBottom) {
+            ball.vy *= -1;
+        } else if (cameFromLeft || cameFromRight) {
+            ball.vx *= -1;
+        } else {
+            ball.vy *= -1;
+        }
+
+        adjustBreakoutBallSpeed(state.breakout.speedIncreaseFactor);
+        collidedBrick = true;
+        break;
+    }
+
+    if (collidedBrick) {
+        const recycledRows = recycleBreakoutRows();
+        if (recycledRows && !state.breakout.gameOver) {
+            state.breakout.status = "한 줄 제거! 새 벽돌이 내려옵니다.";
+        }
+    }
+
+    if (ball.y - ball.radius > canvasHeight) {
+        finishBreakoutGame("gameOver");
+    }
+}
+
+function finishBreakoutGame(result) {
+    cancelBreakoutAnimation();
+    state.breakout.running = false;
+    state.breakout.paused = false;
+    state.breakout.gameOver = result === "gameOver";
+    state.breakout.cleared = false;
+    state.breakout.pauseReason = result;
+    state.breakout.paddleDirection = 0;
+    state.breakout.status = "게임 오버! 다시 시작해서 한 번 더 도전해 보세요.";
+    updateBreakoutControls();
+    renderBreakoutGame();
+}
+
+function renderBreakoutGame() {
+    if (!elements.breakoutCanvas) {
+        return;
+    }
+
+    if (!state.breakout.theme) {
+        state.breakout.theme = readBreakoutTheme();
+    }
+
+    elements.breakoutScore.textContent = String(state.breakout.score);
+    elements.breakoutStatus.textContent = state.breakout.status;
+    updateBreakoutControls();
+
+    const context = elements.breakoutCanvas.getContext("2d");
+    if (!context) {
+        return;
+    }
+
+    drawBreakoutScene(context);
+}
+
+function updateBreakoutControls() {
+    if (!elements.breakoutStartButton || !elements.breakoutPauseButton) {
+        return;
+    }
+
+    elements.breakoutStartButton.textContent = state.breakout.started && !state.breakout.gameOver && !state.breakout.cleared
+        ? (state.breakout.running ? "진행 중" : "계속하기")
+        : "게임 시작";
+    elements.breakoutStartButton.disabled = state.breakout.running;
+
+    elements.breakoutPauseButton.textContent = state.breakout.running ? "일시정지" : "일시정지";
+    elements.breakoutPauseButton.disabled = !state.breakout.started || state.breakout.gameOver || state.breakout.cleared;
+}
+
+function drawBreakoutScene(context) {
+    const {canvasWidth, canvasHeight, theme, bricks, paddle, ball} = state.breakout;
+
+    context.clearRect(0, 0, canvasWidth, canvasHeight);
+
+    const background = context.createLinearGradient(0, 0, 0, canvasHeight);
+    background.addColorStop(0, "rgba(251, 253, 255, 0.98)");
+    background.addColorStop(1, "rgba(216, 244, 255, 0.96)");
+    context.fillStyle = background;
+    context.fillRect(0, 0, canvasWidth, canvasHeight);
+
+    bricks.forEach((brick) => {
+        if (!brick.active) {
+            return;
+        }
+
+        drawRoundedRect(context, brick.x, brick.y, brick.width, brick.height, 8, brick.color, "rgba(79, 55, 35, 0.12)");
+    });
+
+    if (paddle) {
+        drawRoundedRect(context, paddle.x, paddle.y, paddle.width, paddle.height, 8, theme.teal, theme.tealDeep);
+    }
+
+    if (ball) {
+        context.beginPath();
+        context.fillStyle = theme.coral;
+        context.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+        context.fill();
+        context.lineWidth = 3;
+        context.strokeStyle = "rgba(79, 55, 35, 0.14)";
+        context.stroke();
+    }
+}
+
+function createBreakoutBrickConfig(canvasWidth, theme) {
+    const rows = 5;
+    const columns = 7;
+    const paddingX = 18;
+    const topOffset = 24;
+    const gap = 10;
+    const height = 22;
+    const width = (canvasWidth - paddingX * 2 - gap * (columns - 1)) / columns;
+    const colors = [theme.coral, theme.gold, theme.mint, theme.teal, "#ffb86f"];
+
+    return {
+        rows,
+        columns,
+        paddingX,
+        topOffset,
+        gap,
+        height,
+        width,
+        rowStep: height + gap,
+        colors
+    };
+}
+
+function createBreakoutBricks(config) {
+    const bricks = [];
+
+    for (let rowIndex = 0; rowIndex < config.rows; rowIndex += 1) {
+        for (let columnIndex = 0; columnIndex < config.columns; columnIndex += 1) {
+            bricks.push(createBreakoutBrick(config, rowIndex, columnIndex, rowIndex));
+        }
+    }
+
+    return bricks;
+}
+
+function createBreakoutBrick(config, rowIndex, columnIndex, colorSeed) {
+    return {
+        x: config.paddingX + columnIndex * (config.width + config.gap),
+        y: config.topOffset + rowIndex * config.rowStep,
+        width: config.width,
+        height: config.height,
+        color: config.colors[colorSeed % config.colors.length],
+        active: true,
+        row: rowIndex,
+        column: columnIndex
+    };
+}
+
+function recycleBreakoutRows() {
+    const {brickConfig} = state.breakout;
+    if (!brickConfig) {
+        return false;
+    }
+
+    let recycled = false;
+
+    while (true) {
+        const clearedRow = findClearedBreakoutRow();
+        if (clearedRow === null) {
+            break;
+        }
+
+        recycled = true;
+        state.breakout.bricks = state.breakout.bricks.filter((brick) => brick.row !== clearedRow);
+
+        state.breakout.bricks.forEach((brick) => {
+            if (brick.row < clearedRow) {
+                brick.row += 1;
+                brick.y += brickConfig.rowStep;
+            }
+        });
+
+        const colorSeed = state.breakout.nextRowSeed;
+        state.breakout.nextRowSeed += 1;
+
+        for (let columnIndex = 0; columnIndex < brickConfig.columns; columnIndex += 1) {
+            state.breakout.bricks.push(createBreakoutBrick(brickConfig, 0, columnIndex, colorSeed));
+        }
+
+        state.breakout.bricks.sort((left, right) => {
+            if (left.row !== right.row) {
+                return left.row - right.row;
+            }
+            return left.column - right.column;
+        });
+    }
+
+    return recycled;
+}
+
+function findClearedBreakoutRow() {
+    const rows = [...new Set(state.breakout.bricks.map((brick) => brick.row))].sort((left, right) => left - right);
+
+    for (const row of rows) {
+        const rowBricks = state.breakout.bricks.filter((brick) => brick.row === row);
+        if (rowBricks.length > 0 && rowBricks.every((brick) => !brick.active)) {
+            return row;
+        }
+    }
+
+    return null;
+}
+
+function readBreakoutTheme() {
+    const computedStyle = getComputedStyle(document.documentElement);
+    return {
+        coral: computedStyle.getPropertyValue("--coral").trim() || "#ff8d73",
+        gold: computedStyle.getPropertyValue("--gold").trim() || "#f7ca63",
+        mint: computedStyle.getPropertyValue("--mint").trim() || "#42c6ae",
+        teal: computedStyle.getPropertyValue("--teal").trim() || "#0d8e97",
+        tealDeep: computedStyle.getPropertyValue("--teal-deep").trim() || "#0d6f7c"
+    };
+}
+
+function adjustBreakoutBallSpeed(multiplier) {
+    const {ball, maxBallSpeed} = state.breakout;
+    if (!ball) {
+        return;
+    }
+
+    const currentSpeed = Math.hypot(ball.vx, ball.vy);
+    if (!currentSpeed) {
+        return;
+    }
+
+    const nextSpeed = clamp(currentSpeed * multiplier, 0.377, maxBallSpeed);
+    const ratio = nextSpeed / currentSpeed;
+    ball.vx *= ratio;
+    ball.vy *= ratio;
+}
+
+function drawRoundedRect(context, x, y, width, height, radius, fillStyle, strokeStyle) {
+    context.beginPath();
+    context.moveTo(x + radius, y);
+    context.lineTo(x + width - radius, y);
+    context.quadraticCurveTo(x + width, y, x + width, y + radius);
+    context.lineTo(x + width, y + height - radius);
+    context.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+    context.lineTo(x + radius, y + height);
+    context.quadraticCurveTo(x, y + height, x, y + height - radius);
+    context.lineTo(x, y + radius);
+    context.quadraticCurveTo(x, y, x + radius, y);
+    context.closePath();
+    context.fillStyle = fillStyle;
+    context.fill();
+
+    if (strokeStyle) {
+        context.lineWidth = 2;
+        context.strokeStyle = strokeStyle;
+        context.stroke();
+    }
+}
+
+function clamp(value, min, max) {
+    return Math.min(Math.max(value, min), max);
 }
 
 async function loadOnlineUsers() {
@@ -1048,6 +1658,7 @@ function setConnectionStatus(text, mode) {
 function showAuthSection() {
     closeOnlineUsersModal();
     closeGame2048Modal();
+    closeBreakoutModalHandler();
     elements.authSection.classList.remove("hidden");
     elements.appSection.classList.add("hidden");
 }

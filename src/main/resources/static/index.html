@@ -33,6 +33,7 @@
         </div>
         <div class="top-status">
             <button type="button" class="feedback-link-button game-link-button" id="game2048Button">2048 게임 하기</button>
+            <button type="button" class="feedback-link-button game-link-button" id="breakoutButton">벽돌깨기 하기</button>
             <a href="/feedback.html" class="feedback-link-button">피드백 제공</a>
             <button type="button" class="stat-pill stat-pill--button" id="onlineUsersButton">
                 <span class="stat-pill__label">현재 접속</span>
@@ -230,6 +231,38 @@
             <div class="game2048-board-shell" id="game2048BoardShell">
                 <div id="game2048Grid" class="game2048-grid" aria-label="2048 game board"></div>
             </div>
+        </div>
+    </div>
+
+    <div id="breakoutModal" class="modal hidden">
+        <div class="modal-backdrop" id="breakoutBackdrop"></div>
+        <div class="modal-card breakout-modal-card" role="dialog" aria-modal="true" aria-labelledby="breakoutTitle">
+            <div class="modal-header breakout-modal-header">
+                <div>
+                    <h2 id="breakoutTitle">벽돌깨기</h2>
+                    <p class="modal-description">채팅방에 머문 채 좌우 방향키로 패들을 움직여 벽돌을 모두 깨보세요.</p>
+                </div>
+                <div class="breakout-modal-actions">
+                    <button type="button" class="ghost-btn" id="breakoutStartButton">게임 시작</button>
+                    <button type="button" class="ghost-btn" id="breakoutPauseButton">일시정지</button>
+                    <button type="button" class="ghost-btn" id="breakoutRestartButton">다시 시작</button>
+                    <button type="button" class="ghost-btn modal-close" id="closeBreakoutModal">닫기</button>
+                </div>
+            </div>
+
+            <div class="breakout-summary">
+                <div class="breakout-score-box">
+                    <span>현재 점수</span>
+                    <strong id="breakoutScore">0</strong>
+                </div>
+                <p id="breakoutStatus" class="breakout-status">게임 시작을 누르면 바로 진행됩니다.</p>
+            </div>
+
+            <div class="breakout-canvas-shell">
+                <canvas id="breakoutCanvas" class="breakout-canvas" width="520" height="420" aria-label="벽돌깨기 게임 화면"></canvas>
+            </div>
+
+            <p class="breakout-guide">조작: 좌우 방향키로 패들을 움직입니다. 팝업을 닫아도 현재 상태는 유지됩니다.</p>
         </div>
     </div>
 
