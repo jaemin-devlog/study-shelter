@@ -1369,8 +1369,13 @@ button:active {
 
 .game2048-board-shell {
     margin-top: 20px;
-    padding: 14px;
-    min-height: 500px; /* 원하는 전체 높이를 숫자로 지정 */
+    padding: 14px 14px 24px 14px; /* 아래쪽 여백(Padding)을 24px 정도로 넉넉히 줌 */
+
+    /* 핵심 수정 사항: 높이를 고정하지 않고 자동으로 설정 */
+    height: auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
 
     border-radius: 28px;
     border: 3px solid rgba(79, 55, 35, 0.9);
