@@ -12,7 +12,17 @@ const state = {
     presenceToastTimerId: null,
     toastTimerId: null,
     rankingItems: [],
-    onlineCount: 0
+    onlineCount: 0,
+    game2048: {
+        board: [],
+        score: 0,
+        hasWon: false,
+        isOver: false,
+        initialized: false,
+        status: "로그인 후 게임을 열 수 있습니다.",
+        touchStartX: 0,
+        touchStartY: 0
+    }
 };
 
 function logRealtime(event, payload = {}) {
@@ -30,6 +40,15 @@ const elements = {
     chatInput: document.getElementById("chatInput"),
     chatMessages: document.getElementById("chatMessages"),
     rankingList: document.getElementById("rankingList"),
+    game2048Button: document.getElementById("game2048Button"),
+    game2048Modal: document.getElementById("game2048Modal"),
+    game2048Backdrop: document.getElementById("game2048Backdrop"),
+    closeGame2048Modal: document.getElementById("closeGame2048Modal"),
+    restart2048Button: document.getElementById("restart2048Button"),
+    game2048Grid: document.getElementById("game2048Grid"),
+    game2048Score: document.getElementById("game2048Score"),
+    game2048Status: document.getElementById("game2048Status"),
+    game2048BoardShell: document.getElementById("game2048BoardShell"),
     onlineUsersButton: document.getElementById("onlineUsersButton"),
     onlineUsersModal: document.getElementById("onlineUsersModal"),
     onlineUsersBackdrop: document.getElementById("onlineUsersBackdrop"),
@@ -71,14 +90,16 @@ function bindEvents() {
     elements.signupForm.addEventListener("submit", handleSignup);
     elements.logoutButton.addEventListener("click", handleLogout);
     elements.chatForm.addEventListener("submit", handleSendChat);
+    elements.game2048Button?.addEventListener("click", openGame2048Modal);
+    elements.closeGame2048Modal?.addEventListener("click", closeGame2048Modal);
+    elements.game2048Backdrop?.addEventListener("click", closeGame2048Modal);
+    elements.restart2048Button?.addEventListener("click", reset2048Game);
+    elements.game2048BoardShell?.addEventListener("touchstart", handleGame2048TouchStart, {passive: true});
+    elements.game2048BoardShell?.addEventListener("touchend", handleGame2048TouchEnd, {passive: true});
     elements.onlineUsersButton?.addEventListener("click", openOnlineUsersModal);
     elements.closeOnlineUsersModal?.addEventListener("click", closeOnlineUsersModal);
     elements.onlineUsersBackdrop?.addEventListener("click", closeOnlineUsersModal);
-    document.addEventListener("keydown", (event) => {
-        if (event.key === "Escape") {
-            closeOnlineUsersModal();
-        }
-    });
+    document.addEventListener("keydown", handleGlobalKeydown);
 }
 
 async function restoreSession() {
@@ -414,6 +435,290 @@ function closeOnlineUsersModal() {
     elements.onlineUsersModal?.classList.add("hidden");
 }
 
+function handleGlobalKeydown(event) {
+    if (event.key === "Escape") {
+        closeOnlineUsersModal();
+        closeGame2048Modal();
+        return;
+    }
+
+    if (elements.game2048Modal?.classList.contains("hidden")) {
+        return;
+    }
+
+    const direction = {
+        ArrowUp: "up",
+        ArrowDown: "down",
+        ArrowLeft: "left",
+        ArrowRight: "right"
+    }[event.key];
+
+    if (!direction) {
+        return;
+    }
+
+    event.preventDefault();
+    move2048(direction);
+}
+
+function openGame2048Modal() {
+    if (!state.sessionToken || !state.me) {
+        showToast("2048 게임은 로그인 후 이용할 수 있어요.");
+        elements.loginNickname?.focus();
+        return;
+    }
+
+    closeOnlineUsersModal();
+
+    if (!state.game2048.initialized) {
+        reset2048Game();
+    } else {
+        render2048Game();
+    }
+
+    elements.game2048Modal?.classList.remove("hidden");
+}
+
+function closeGame2048Modal() {
+    elements.game2048Modal?.classList.add("hidden");
+}
+
+function reset2048Game() {
+    const board = createEmpty2048Board();
+    spawnRandom2048Tile(board);
+    spawnRandom2048Tile(board);
+
+    state.game2048 = {
+        ...state.game2048,
+        board,
+        score: 0,
+        hasWon: false,
+        isOver: false,
+        initialized: true,
+        status: "방향키나 스와이프로 시작해 보세요."
+    };
+
+    render2048Game();
+}
+
+function render2048Game() {
+    if (!elements.game2048Grid) {
+        return;
+    }
+
+    const fragment = document.createDocumentFragment();
+
+    state.game2048.board.flat().forEach((value) => {
+        const cell = document.createElement("div");
+        cell.className = `game2048-cell${value ? ` value-${value}` : ""}`;
+        cell.textContent = value ? String(value) : "";
+        fragment.append(cell);
+    });
+
+    elements.game2048Grid.replaceChildren(fragment);
+    elements.game2048Score.textContent = String(state.game2048.score);
+    elements.game2048Status.textContent = state.game2048.status;
+}
+
+function handleGame2048TouchStart(event) {
+    const touch = event.changedTouches?.[0];
+    if (!touch) {
+        return;
+    }
+
+    state.game2048.touchStartX = touch.clientX;
+    state.game2048.touchStartY = touch.clientY;
+}
+
+function handleGame2048TouchEnd(event) {
+    const touch = event.changedTouches?.[0];
+    if (!touch) {
+        return;
+    }
+
+    const deltaX = touch.clientX - state.game2048.touchStartX;
+    const deltaY = touch.clientY - state.game2048.touchStartY;
+    const threshold = 30;
+
+    if (Math.abs(deltaX) < threshold && Math.abs(deltaY) < threshold) {
+        return;
+    }
+
+    if (Math.abs(deltaX) > Math.abs(deltaY)) {
+        move2048(deltaX > 0 ? "right" : "left");
+        return;
+    }
+
+    move2048(deltaY > 0 ? "down" : "up");
+}
+
+function move2048(direction) {
+    if (!state.game2048.initialized || state.game2048.isOver) {
+        return;
+    }
+
+    const result = run2048Move(state.game2048.board, direction);
+    if (!result.moved) {
+        state.game2048.status = "더 움직일 수 있는 방향으로 밀어보세요.";
+        render2048Game();
+        return;
+    }
+
+    spawnRandom2048Tile(result.board);
+
+    const hasWon = state.game2048.hasWon || result.created2048;
+    const isOver = !canMove2048(result.board);
+
+    state.game2048 = {
+        ...state.game2048,
+        board: result.board,
+        score: state.game2048.score + result.gainedScore,
+        hasWon,
+        isOver,
+        status: isOver
+            ? "게임 오버! 다시 시작해서 한 번 더 도전해 보세요."
+            : hasWon && !state.game2048.hasWon
+                ? "2048을 만들었어요! 계속 이어서 플레이할 수 있습니다."
+                : "좋아요. 다음 수를 이어가 보세요."
+    };
+
+    render2048Game();
+}
+
+function createEmpty2048Board() {
+    return Array.from({length: 4}, () => Array(4).fill(0));
+}
+
+function spawnRandom2048Tile(board) {
+    const emptyCells = [];
+
+    board.forEach((row, rowIndex) => {
+        row.forEach((value, columnIndex) => {
+            if (value === 0) {
+                emptyCells.push({rowIndex, columnIndex});
+            }
+        });
+    });
+
+    if (emptyCells.length === 0) {
+        return false;
+    }
+
+    const target = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+    board[target.rowIndex][target.columnIndex] = Math.random() < 0.9 ? 2 : 4;
+    return true;
+}
+
+function run2048Move(board, direction) {
+    const nextBoard = board.map((row) => row.slice());
+    let moved = false;
+    let gainedScore = 0;
+    let created2048 = false;
+
+    for (let index = 0; index < 4; index += 1) {
+        const originalLine = get2048Line(nextBoard, direction, index);
+        const forwardLine = direction === "right" || direction === "down"
+            ? originalLine.slice().reverse()
+            : originalLine.slice();
+        const merged = merge2048Line(forwardLine);
+        const resolvedLine = direction === "right" || direction === "down"
+            ? merged.line.slice().reverse()
+            : merged.line;
+
+        if (!moved && !are2048LinesEqual(originalLine, resolvedLine)) {
+            moved = true;
+        }
+
+        gainedScore += merged.score;
+        created2048 = created2048 || merged.created2048;
+        set2048Line(nextBoard, direction, index, resolvedLine);
+    }
+
+    return {
+        board: nextBoard,
+        moved,
+        gainedScore,
+        created2048
+    };
+}
+
+function merge2048Line(line) {
+    const filtered = line.filter((value) => value !== 0);
+    const mergedLine = [];
+    let score = 0;
+    let created2048 = false;
+
+    for (let index = 0; index < filtered.length; index += 1) {
+        const current = filtered[index];
+        const next = filtered[index + 1];
+
+        if (current === next) {
+            const mergedValue = current * 2;
+            mergedLine.push(mergedValue);
+            score += mergedValue;
+            created2048 = created2048 || mergedValue === 2048;
+            index += 1;
+            continue;
+        }
+
+        mergedLine.push(current);
+    }
+
+    while (mergedLine.length < 4) {
+        mergedLine.push(0);
+    }
+
+    return {
+        line: mergedLine,
+        score,
+        created2048
+    };
+}
+
+function get2048Line(board, direction, index) {
+    if (direction === "left" || direction === "right") {
+        return board[index].slice();
+    }
+
+    return board.map((row) => row[index]);
+}
+
+function set2048Line(board, direction, index, line) {
+    if (direction === "left" || direction === "right") {
+        board[index] = line.slice();
+        return;
+    }
+
+    line.forEach((value, rowIndex) => {
+        board[rowIndex][index] = value;
+    });
+}
+
+function are2048LinesEqual(first, second) {
+    return first.every((value, index) => value === second[index]);
+}
+
+function canMove2048(board) {
+    for (let rowIndex = 0; rowIndex < 4; rowIndex += 1) {
+        for (let columnIndex = 0; columnIndex < 4; columnIndex += 1) {
+            const value = board[rowIndex][columnIndex];
+            if (value === 0) {
+                return true;
+            }
+
+            if (columnIndex < 3 && board[rowIndex][columnIndex + 1] === value) {
+                return true;
+            }
+
+            if (rowIndex < 3 && board[rowIndex + 1][columnIndex] === value) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
 async function loadOnlineUsers() {
     try {
         const response = await apiRequest("/api/presence/users");
@@ -742,6 +1047,7 @@ function setConnectionStatus(text, mode) {
 
 function showAuthSection() {
     closeOnlineUsersModal();
+    closeGame2048Modal();
     elements.authSection.classList.remove("hidden");
     elements.appSection.classList.add("hidden");
 }

@@ -32,6 +32,7 @@
             <span class="top-pill top-pill--muted">LIKELION</span>
         </div>
         <div class="top-status">
+            <button type="button" class="feedback-link-button game-link-button" id="game2048Button">2048 게임 하기</button>
             <a href="/feedback.html" class="feedback-link-button">피드백 제공</a>
             <button type="button" class="stat-pill stat-pill--button" id="onlineUsersButton">
                 <span class="stat-pill__label">현재 접속</span>
@@ -201,6 +202,34 @@
                 <button type="button" class="ghost-btn modal-close" id="closeOnlineUsersModal">닫기</button>
             </div>
             <ul id="onlineUsersList" class="online-users-list"></ul>
+        </div>
+    </div>
+
+    <div id="game2048Modal" class="modal hidden">
+        <div class="modal-backdrop" id="game2048Backdrop"></div>
+        <div class="modal-card game-modal-card" role="dialog" aria-modal="true" aria-labelledby="game2048Title">
+            <div class="modal-header game-modal-header">
+                <div>
+                    <h2 id="game2048Title">2048 게임</h2>
+                    <p class="modal-description">채팅방에 그대로 머무른 채 방향키나 스와이프로 플레이할 수 있습니다.</p>
+                </div>
+                <div class="game-modal-actions">
+                    <button type="button" class="ghost-btn" id="restart2048Button">다시 시작</button>
+                    <button type="button" class="ghost-btn modal-close" id="closeGame2048Modal">닫기</button>
+                </div>
+            </div>
+
+            <div class="game2048-summary">
+                <div class="game2048-score-box">
+                    <span>현재 점수</span>
+                    <strong id="game2048Score">0</strong>
+                </div>
+                <p id="game2048Status" class="game2048-status">로그인 후 게임을 열면 시간과 채팅은 그대로 유지됩니다.</p>
+            </div>
+
+            <div class="game2048-board-shell" id="game2048BoardShell">
+                <div id="game2048Grid" class="game2048-grid" aria-label="2048 game board"></div>
+            </div>
         </div>
     </div>
 
