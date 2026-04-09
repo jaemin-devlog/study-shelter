@@ -14,8 +14,4 @@ public record ChatMessageResponse(
     public static ChatMessageResponse chat(String nickname, String school, String content) {
         return new ChatMessageResponse("CHAT", nickname, school, content, System.currentTimeMillis());
     }
-
-    public static ChatMessageResponse announcement(String content) {
-        return new ChatMessageResponse("ANNOUNCEMENT", "학업대피소", "알림", content, System.currentTimeMillis());
-    }
 }

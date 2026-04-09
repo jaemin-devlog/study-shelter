@@ -8,5 +8,5 @@ import java.util.List;
 
 public interface ChatMessageRepository extends JpaRepository<ChatMessageEntity, Long> {
 
-    List<ChatMessageEntity> findAllByTypeInOrderBySentAtDesc(List<String> types, Pageable pageable);
+    List<ChatMessageEntity> findAllByTypeOrderBySentAtDesc(String type, Pageable pageable);
 }
