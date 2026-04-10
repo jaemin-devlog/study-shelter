@@ -25,17 +25,17 @@ public class WebSocketEventListener {
 
     @EventListener
     public void handleSessionConnect(SessionConnectEvent event) {
-        log.info("WS_EVENT type=SessionConnect");
+        log.debug("WS_EVENT type=SessionConnect");
     }
 
     @EventListener
     public void handleSessionConnected(SessionConnectedEvent event) {
-        log.info("WS_EVENT type=SessionConnected");
+        log.debug("WS_EVENT type=SessionConnected");
     }
 
     @EventListener
     public void handleSessionDisconnect(SessionDisconnectEvent event) {
-        log.info("WS_EVENT type=SessionDisconnect sessionId={}", event.getSessionId());
+        log.debug("WS_EVENT type=SessionDisconnect sessionId={}", event.getSessionId());
         presenceService.unregisterByWebSocketSessionId(event.getSessionId());
     }
 }

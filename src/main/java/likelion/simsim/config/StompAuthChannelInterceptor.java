@@ -54,7 +54,7 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
             return message;
         }
 
-        log.info(
+        log.debug(
                 "STOMP_FRAME command={} sessionId={} destination={}",
                 accessor.getCommand(),
                 accessor.getSessionId(),
@@ -100,7 +100,7 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
             throw new UnauthorizedException("WebSocket 세션 ID를 확인할 수 없습니다.");
         }
 
-        log.info(
+        log.debug(
                 "STOMP_CONNECT_ACCEPT nickname={} sessionId={} tokenSuffix={}",
                 sessionInfo.nickname(),
                 stompSessionId,
@@ -125,7 +125,7 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
             throw new UnauthorizedException("세션 토큰이 없습니다.");
         }
 
-        log.info("STOMP_SEND_ACCEPT sessionId={} destination={}", accessor.getSessionId(), accessor.getDestination());
+        log.debug("STOMP_SEND_ACCEPT sessionId={} destination={}", accessor.getSessionId(), accessor.getDestination());
         sessionService.requireSession(sessionToken);
     }
 }
