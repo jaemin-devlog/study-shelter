@@ -12,6 +12,8 @@ const state = {
     uiTickerId: null,
     presenceToastTimerId: null,
     toastTimerId: null,
+    lastAnnouncementSignature: null,
+    lastAnnouncementAt: 0,
     rankingItems: [],
     onlineCount: 0,
     game2048: {
@@ -48,6 +50,27 @@ const state = {
         nextRowSeed: 0,
         speedIncreaseFactor: 1.0025,
         maxBallSpeed: 0.46
+    },
+    gradeRun: {
+        initialized: false,
+        running: false,
+        paused: true,
+        started: false,
+        gameOver: false,
+        pauseReason: "idle",
+        score: 0,
+        bestScore: 0,
+        animationFrameId: null,
+        lastTimestamp: 0,
+        canvasWidth: 620,
+        canvasHeight: 300,
+        player: null,
+        obstacles: [],
+        spawnCooldown: 0,
+        distance: 0,
+        groundY: 0,
+        speed: 0.34,
+        theme: null
     }
 };
 
@@ -71,9 +94,11 @@ const elements = {
     rankingList: document.getElementById("rankingList"),
     game2048Button: document.getElementById("game2048Button"),
     breakoutButton: document.getElementById("breakoutButton"),
+    gradeRunButton: document.getElementById("gradeRunButton"),
     game2048Modal: document.getElementById("game2048Modal"),
     game2048Backdrop: document.getElementById("game2048Backdrop"),
     closeGame2048Modal: document.getElementById("closeGame2048Modal"),
+    share2048Button: document.getElementById("share2048Button"),
     restart2048Button: document.getElementById("restart2048Button"),
     game2048Grid: document.getElementById("game2048Grid"),
     game2048Score: document.getElementById("game2048Score"),
@@ -84,11 +109,22 @@ const elements = {
     closeBreakoutModal: document.getElementById("closeBreakoutModal"),
     breakoutStartButton: document.getElementById("breakoutStartButton"),
     breakoutPauseButton: document.getElementById("breakoutPauseButton"),
-    breakoutRestartButton: document.getElementById("breakoutRestartButton"),
+    breakoutShareButton: document.getElementById("breakoutShareButton"),
     breakoutCanvas: document.getElementById("breakoutCanvas"),
     breakoutScore: document.getElementById("breakoutScore"),
     breakoutStatus: document.getElementById("breakoutStatus"),
     breakoutGuide: document.querySelector(".breakout-guide"),
+    gradeRunModal: document.getElementById("gradeRunModal"),
+    gradeRunBackdrop: document.getElementById("gradeRunBackdrop"),
+    closeGradeRunModal: document.getElementById("closeGradeRunModal"),
+    gradeRunStartButton: document.getElementById("gradeRunStartButton"),
+    gradeRunPauseButton: document.getElementById("gradeRunPauseButton"),
+    gradeRunShareButton: document.getElementById("gradeRunShareButton"),
+    gradeRunRestartButton: document.getElementById("gradeRunRestartButton"),
+    gradeRunCanvas: document.getElementById("gradeRunCanvas"),
+    gradeRunScore: document.getElementById("gradeRunScore"),
+    gradeRunStatus: document.getElementById("gradeRunStatus"),
+    gradeRunGuide: document.querySelector(".grade-run-guide"),
     onlineUsersButton: document.getElementById("onlineUsersButton"),
     onlineUsersModal: document.getElementById("onlineUsersModal"),
     onlineUsersBackdrop: document.getElementById("onlineUsersBackdrop"),
@@ -134,14 +170,22 @@ function bindEvents() {
     elements.chatForm.addEventListener("submit", handleSendChat);
     elements.game2048Button?.addEventListener("click", openGame2048Modal);
     elements.breakoutButton?.addEventListener("click", openBreakoutModal);
+    elements.gradeRunButton?.addEventListener("click", openGradeRunModal);
     elements.closeGame2048Modal?.addEventListener("click", closeGame2048Modal);
     elements.game2048Backdrop?.addEventListener("click", closeGame2048Modal);
+    elements.share2048Button?.addEventListener("click", handle2048ShareButton);
     elements.restart2048Button?.addEventListener("click", reset2048Game);
     elements.closeBreakoutModal?.addEventListener("click", closeBreakoutModalHandler);
     elements.breakoutBackdrop?.addEventListener("click", closeBreakoutModalHandler);
     elements.breakoutStartButton?.addEventListener("click", handleBreakoutStartButton);
     elements.breakoutPauseButton?.addEventListener("click", handleBreakoutPauseButton);
-    elements.breakoutRestartButton?.addEventListener("click", restartBreakoutGame);
+    elements.breakoutShareButton?.addEventListener("click", handleBreakoutShareButton);
+    elements.closeGradeRunModal?.addEventListener("click", closeGradeRunModalHandler);
+    elements.gradeRunBackdrop?.addEventListener("click", closeGradeRunModalHandler);
+    elements.gradeRunStartButton?.addEventListener("click", handleGradeRunStartButton);
+    elements.gradeRunPauseButton?.addEventListener("click", handleGradeRunPauseButton);
+    elements.gradeRunShareButton?.addEventListener("click", handleGradeRunShareButton);
+    elements.gradeRunRestartButton?.addEventListener("click", restartGradeRunGame);
     elements.game2048BoardShell?.addEventListener("touchstart", handleGame2048TouchStart, {passive: true});
     elements.game2048BoardShell?.addEventListener("touchend", handleGame2048TouchEnd, {passive: true});
     elements.breakoutCanvas?.addEventListener("touchstart", handleBreakoutTouchStart, {passive: false});
@@ -150,6 +194,8 @@ function bindEvents() {
     elements.breakoutCanvas?.addEventListener("mousemove", handleBreakoutMouseMove);
     elements.breakoutCanvas?.addEventListener("mouseenter", handleBreakoutMouseMove);
     elements.breakoutCanvas?.addEventListener("mouseleave", handleBreakoutMouseLeave);
+    elements.gradeRunCanvas?.addEventListener("click", handleGradeRunPointerJump);
+    elements.gradeRunCanvas?.addEventListener("touchstart", handleGradeRunTouchStart, {passive: false});
     elements.onlineUsersButton?.addEventListener("click", openOnlineUsersModal);
     elements.closeOnlineUsersModal?.addEventListener("click", closeOnlineUsersModal);
     elements.onlineUsersBackdrop?.addEventListener("click", closeOnlineUsersModal);
@@ -188,6 +234,10 @@ function handleViewportResize() {
     if (!elements.breakoutModal?.classList.contains("hidden")) {
         renderBreakoutGame();
     }
+
+    if (!elements.gradeRunModal?.classList.contains("hidden")) {
+        renderGradeRunGame();
+    }
 }
 
 function isMobileViewport() {
@@ -196,6 +246,7 @@ function isMobileViewport() {
 
 function syncResponsiveLayout() {
     updateBreakoutGuideText();
+    updateGradeRunGuideText();
 
     if (!elements.appSection || !elements.mobileAppSwitcher) {
         return;
@@ -255,6 +306,16 @@ function updateBreakoutGuideText() {
     elements.breakoutGuide.textContent = isMobileViewport()
         ? "조작: 패들을 손가락으로 좌우로 밀어서 움직일 수 있습니다. 팝업을 닫아도 현재 상태는 그대로 유지됩니다."
         : "조작: 마우스 또는 좌우 방향키로 패들을 움직입니다. 팝업을 닫아도 현재 상태는 그대로 유지됩니다.";
+}
+
+function updateGradeRunGuideText() {
+    if (!elements.gradeRunGuide) {
+        return;
+    }
+
+    elements.gradeRunGuide.textContent = isMobileViewport()
+        ? "조작: 화면을 터치하면 점프합니다. 팝업을 닫아도 현재 상태는 그대로 유지됩니다."
+        : "조작: 스페이스, 위 방향키, 마우스 클릭으로 점프합니다. 팝업을 닫아도 현재 상태는 그대로 유지됩니다.";
 }
 
 async function restoreSession() {
@@ -370,6 +431,75 @@ function handleSendChat(event) {
     });
 
     elements.chatInput.value = "";
+}
+
+function publishGameShare(gameName, score) {
+    const normalizedScore = Math.max(0, Number(score || 0));
+    if (normalizedScore <= 0) {
+        showToast("공유할 점수가 아직 없습니다.");
+        return;
+    }
+
+    if (!state.connected || !state.stompClient || !state.stompClient.connected) {
+        showToast("실시간 연결이 준비된 뒤에 공유할 수 있습니다.");
+        return;
+    }
+
+    const announcementContent = `${state.me.nickname}님이 ${gameName}에서 ${normalizedScore}점을 달성하였습니다!`;
+    appendChatMessage({
+        type: "ANNOUNCEMENT",
+        nickname: null,
+        school: null,
+        content: announcementContent,
+        sentAt: Date.now()
+    });
+    rememberAnnouncementSignature({
+        type: "ANNOUNCEMENT",
+        content: announcementContent
+    });
+
+    state.stompClient.publish({
+        destination: "/app/chat.announce",
+        body: JSON.stringify({
+            gameName,
+            score: normalizedScore
+        })
+    });
+
+    showToast("점수를 채팅방에 공유했습니다.");
+}
+
+function rememberAnnouncementSignature(message) {
+    state.lastAnnouncementSignature = createAnnouncementSignature(message);
+    state.lastAnnouncementAt = Date.now();
+}
+
+function createAnnouncementSignature(message) {
+    return `${message.type || ""}:${message.content || ""}`;
+}
+
+function shouldSkipAnnouncementMessage(message) {
+    if (!message || message.type !== "ANNOUNCEMENT") {
+        return false;
+    }
+
+    const signature = createAnnouncementSignature(message);
+    return Boolean(
+        state.lastAnnouncementSignature === signature &&
+        Date.now() - state.lastAnnouncementAt < 3000
+    );
+}
+
+function handle2048ShareButton() {
+    publishGameShare("2048 게임", state.game2048.score);
+}
+
+function handleBreakoutShareButton() {
+    publishGameShare("벽돌깨기", state.breakout.score);
+}
+
+function handleGradeRunShareButton() {
+    publishGameShare("개발 피하기", state.gradeRun.score);
 }
 
 async function loadPublicSnapshots() {
@@ -595,6 +725,7 @@ function handleGlobalKeydown(event) {
         closeOnlineUsersModal();
         closeGame2048Modal();
         closeBreakoutModalHandler();
+        closeGradeRunModalHandler();
         return;
     }
 
@@ -610,6 +741,14 @@ function handleGlobalKeydown(event) {
             event.preventDefault();
             state.breakout.rightPressed = true;
             state.breakout.paddleDirection = 1;
+            return;
+        }
+    }
+
+    if (!elements.gradeRunModal?.classList.contains("hidden")) {
+        if (event.key === " " || event.key === "ArrowUp") {
+            event.preventDefault();
+            triggerGradeRunJump();
             return;
         }
     }
@@ -716,6 +855,43 @@ function closeBreakoutModalHandler() {
     elements.breakoutModal.classList.add("hidden");
 }
 
+function openGradeRunModal() {
+    if (!state.sessionToken || !state.me) {
+        showToast("개발 피하기 게임은 로그인 후 이용할 수 있어요.");
+        elements.loginNickname?.focus();
+        return;
+    }
+
+    closeOnlineUsersModal();
+    closeGame2048Modal();
+    closeBreakoutModalHandler();
+
+    if (!state.gradeRun.initialized) {
+        initializeGradeRunGame();
+    }
+
+    elements.gradeRunModal?.classList.remove("hidden");
+
+    if (state.gradeRun.started && state.gradeRun.paused && state.gradeRun.pauseReason === "hidden" && !state.gradeRun.gameOver) {
+        startGradeRunGame();
+        return;
+    }
+
+    renderGradeRunGame();
+}
+
+function closeGradeRunModalHandler() {
+    if (!elements.gradeRunModal || elements.gradeRunModal.classList.contains("hidden")) {
+        return;
+    }
+
+    if (state.gradeRun.running) {
+        pauseGradeRunGame("hidden");
+    }
+
+    elements.gradeRunModal.classList.add("hidden");
+}
+
 function reset2048Game() {
     const board = createEmpty2048Board();
     spawnRandom2048Tile(board);
@@ -751,6 +927,9 @@ function render2048Game() {
     elements.game2048Grid.replaceChildren(fragment);
     elements.game2048Score.textContent = String(state.game2048.score);
     elements.game2048Status.textContent = state.game2048.status;
+    if (elements.share2048Button) {
+        elements.share2048Button.disabled = !state.connected || state.game2048.score <= 0;
+    }
 }
 
 function handleGame2048TouchStart(event) {
@@ -1021,6 +1200,525 @@ function canMove2048(board) {
     }
 
     return false;
+}
+
+function initializeGradeRunGame() {
+    state.gradeRun = {
+        ...state.gradeRun,
+        initialized: true,
+        theme: readBreakoutTheme()
+    };
+    resetGradeRunGame();
+}
+
+function handleGradeRunStartButton() {
+    startGradeRunGame();
+}
+
+function handleGradeRunPauseButton() {
+    if (state.gradeRun.running) {
+        pauseGradeRunGame("manual");
+        return;
+    }
+
+    if (state.gradeRun.started && !state.gradeRun.gameOver) {
+        startGradeRunGame();
+    }
+}
+
+function restartGradeRunGame() {
+    cancelGradeRunAnimation();
+    resetGradeRunGame();
+    renderGradeRunGame();
+}
+
+function resetGradeRunGame() {
+    const canvas = elements.gradeRunCanvas;
+    if (!canvas) {
+        return;
+    }
+
+    const canvasWidth = canvas.width;
+    const canvasHeight = canvas.height;
+    const groundHeight = 54;
+    const groundY = canvasHeight - groundHeight;
+    const playerWidth = 42;
+    const playerHeight = 58;
+
+    state.gradeRun = {
+        ...state.gradeRun,
+        initialized: true,
+        running: false,
+        paused: true,
+        started: false,
+        gameOver: false,
+        pauseReason: "idle",
+        score: 0,
+        animationFrameId: null,
+        lastTimestamp: 0,
+        canvasWidth,
+        canvasHeight,
+        groundY,
+        distance: 0,
+        speed: 0.36,
+        spawnCooldown: getRandomGradeRunSpawnDelay(0.36),
+        player: {
+            x: 84,
+            y: groundY - playerHeight,
+            width: playerWidth,
+            height: playerHeight,
+            vy: 0,
+            gravity: 0.00275,
+            jumpStrength: 0.92
+        },
+        obstacles: [],
+        status: "게임 시작을 누른 뒤 스페이스, 위 방향키, 클릭, 터치로 점프하세요."
+    };
+
+    updateGradeRunControls();
+}
+
+function startGradeRunGame() {
+    if (!state.gradeRun.initialized) {
+        initializeGradeRunGame();
+    }
+
+    if (state.gradeRun.gameOver) {
+        resetGradeRunGame();
+    }
+
+    if (state.gradeRun.running) {
+        return;
+    }
+
+    state.gradeRun.running = true;
+    state.gradeRun.paused = false;
+    state.gradeRun.started = true;
+    state.gradeRun.pauseReason = "play";
+    state.gradeRun.lastTimestamp = 0;
+    state.gradeRun.status = "개발 피하기 진행 중";
+    updateGradeRunControls();
+    renderGradeRunGame();
+    state.gradeRun.animationFrameId = window.requestAnimationFrame(stepGradeRunGame);
+}
+
+function pauseGradeRunGame(reason = "manual") {
+    cancelGradeRunAnimation();
+    state.gradeRun.running = false;
+    state.gradeRun.paused = true;
+    state.gradeRun.pauseReason = reason;
+    state.gradeRun.lastTimestamp = 0;
+
+    if (!state.gradeRun.gameOver && state.gradeRun.started) {
+        state.gradeRun.status = reason === "hidden"
+            ? "이어서 개발을 피할 수 있습니다."
+            : "일시정지됨";
+    }
+
+    updateGradeRunControls();
+    renderGradeRunGame();
+}
+
+function cancelGradeRunAnimation() {
+    if (!state.gradeRun.animationFrameId) {
+        return;
+    }
+
+    window.cancelAnimationFrame(state.gradeRun.animationFrameId);
+    state.gradeRun.animationFrameId = null;
+}
+
+function stepGradeRunGame(timestamp) {
+    if (!state.gradeRun.running) {
+        return;
+    }
+
+    if (!state.gradeRun.lastTimestamp) {
+        state.gradeRun.lastTimestamp = timestamp;
+    }
+
+    const delta = Math.min(timestamp - state.gradeRun.lastTimestamp, 32);
+    state.gradeRun.lastTimestamp = timestamp;
+    updateGradeRunGame(delta);
+    renderGradeRunGame();
+
+    if (state.gradeRun.running) {
+        state.gradeRun.animationFrameId = window.requestAnimationFrame(stepGradeRunGame);
+    }
+}
+
+function updateGradeRunGame(delta) {
+    const {player, canvasWidth, groundY} = state.gradeRun;
+    if (!player) {
+        return;
+    }
+
+    state.gradeRun.speed = Math.min(state.gradeRun.speed + delta * 0.0000041, 0.92);
+    state.gradeRun.distance += state.gradeRun.speed * delta;
+    state.gradeRun.score = Math.max(state.gradeRun.score, Math.floor(state.gradeRun.distance / 12));
+    state.gradeRun.bestScore = Math.max(state.gradeRun.bestScore, state.gradeRun.score);
+
+    player.vy += player.gravity * delta;
+    player.y += player.vy * delta;
+
+    const playerFloor = groundY - player.height;
+    if (player.y > playerFloor) {
+        player.y = playerFloor;
+        player.vy = 0;
+    }
+
+    state.gradeRun.spawnCooldown -= delta;
+    if (state.gradeRun.spawnCooldown <= 0) {
+        state.gradeRun.obstacles.push(createGradeRunObstacle());
+        state.gradeRun.spawnCooldown = getRandomGradeRunSpawnDelay(state.gradeRun.speed);
+    }
+
+    state.gradeRun.obstacles.forEach((obstacle) => {
+        obstacle.x -= state.gradeRun.speed * delta;
+    });
+    state.gradeRun.obstacles = state.gradeRun.obstacles.filter((obstacle) => obstacle.x + obstacle.width > -40);
+
+    const hitObstacle = state.gradeRun.obstacles.find((obstacle) => checkGradeRunCollision(player, obstacle));
+    if (hitObstacle) {
+        cancelGradeRunAnimation();
+        state.gradeRun.running = false;
+        state.gradeRun.paused = false;
+        state.gradeRun.gameOver = true;
+        state.gradeRun.status = `${hitObstacle.label}에 걸렸습니다. 다시 시작해서 최고 기록을 노려보세요.`;
+        updateGradeRunControls();
+        return;
+    }
+
+    if (state.gradeRun.obstacles.length > 0 && state.gradeRun.obstacles[0].x > canvasWidth * 0.72) {
+        return;
+    }
+}
+
+function triggerGradeRunJump() {
+    if (!state.gradeRun.initialized) {
+        initializeGradeRunGame();
+    }
+
+    if (!state.gradeRun.started) {
+        startGradeRunGame();
+    }
+
+    if (state.gradeRun.paused && !state.gradeRun.gameOver) {
+        startGradeRunGame();
+    }
+
+    if (state.gradeRun.gameOver || !state.gradeRun.player) {
+        return;
+    }
+
+    const floorY = state.gradeRun.groundY - state.gradeRun.player.height;
+    if (Math.abs(state.gradeRun.player.y - floorY) > 1) {
+        return;
+    }
+
+    state.gradeRun.player.vy = -state.gradeRun.player.jumpStrength;
+    state.gradeRun.status = "점프 성공! 장애물을 계속 피하세요.";
+}
+
+function handleGradeRunPointerJump(event) {
+    event.preventDefault();
+    triggerGradeRunJump();
+}
+
+function handleGradeRunTouchStart(event) {
+    event.preventDefault();
+    triggerGradeRunJump();
+}
+
+function resolveGradeRunObstacleY(type) {
+    const {groundY} = state.gradeRun;
+
+    if (type.lane === "air-high") {
+        return groundY - type.height - 118;
+    }
+
+    if (type.lane === "air-mid") {
+        return groundY - type.height - 82;
+    }
+
+    return groundY - type.height;
+}
+
+function createGradeRunSprites(theme) {
+    const spriteDefinitions = [
+        {key: "java", label: "JAVA", accent: "#ffb866", icon: "coffee"},
+        {key: "spring", label: "SPRING", accent: theme.mint || "#42c6ae", icon: "leaf"},
+        {key: "mysql", label: "MYSQL", accent: theme.gold || "#f7ca63", icon: "database"},
+        {key: "react", label: "REACT", accent: "#67d6ef", icon: "atom"},
+        {key: "docker", label: "DOCKER", accent: "#72b7ff", icon: "whale"},
+        {key: "jpa", label: "JPA", accent: theme.coral || "#ff8d73", icon: "folder"}
+    ];
+
+    return Object.fromEntries(spriteDefinitions.map((definition) => {
+        const image = new Image();
+        image.decoding = "async";
+        image.src = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(buildGradeRunSpriteSvg(definition))}`;
+        return [definition.key, image];
+    }));
+}
+
+function buildGradeRunSpriteSvg(definition) {
+    const iconMarkup = getGradeRunSpriteIconMarkup(definition.icon, definition.accent);
+    return `
+        <svg xmlns="http://www.w3.org/2000/svg" width="160" height="88" viewBox="0 0 160 88">
+            <defs>
+                <linearGradient id="panel-${definition.key}" x1="0" x2="1" y1="0" y2="1">
+                    <stop offset="0%" stop-color="#fff9ef"/>
+                    <stop offset="100%" stop-color="#ffe9c8"/>
+                </linearGradient>
+                <filter id="shadow-${definition.key}" x="-20%" y="-20%" width="140%" height="150%">
+                    <feDropShadow dx="0" dy="5" stdDeviation="3" flood-color="rgba(79,55,35,0.18)"/>
+                </filter>
+            </defs>
+            <rect x="6" y="8" width="148" height="72" rx="20" fill="url(#panel-${definition.key})" stroke="rgba(79,55,35,0.12)" stroke-width="3" filter="url(#shadow-${definition.key})"/>
+            <rect x="16" y="18" width="38" height="38" rx="12" fill="${definition.accent}" opacity="0.96"/>
+            ${iconMarkup}
+            <text x="64" y="37" fill="#3b2a1f" font-family="Jua, sans-serif" font-size="22" font-weight="900">${definition.label}</text>
+            <text x="64" y="58" fill="#7a685b" font-family="Pretendard, sans-serif" font-size="11" font-weight="700">개발 블록 회피</text>
+        </svg>
+    `.trim();
+}
+
+function getGradeRunSpriteIconMarkup(icon, accent) {
+    switch (icon) {
+        case "coffee":
+            return `
+                <path d="M28 27h10c6 0 10 4 10 10v4c0 6-4 10-10 10H26c-5 0-8-3-8-8v-6c0-6 4-10 10-10z" fill="#fff7ec"/>
+                <path d="M44 31h3c4 0 7 3 7 7s-3 7-7 7h-3" fill="none" stroke="#fff7ec" stroke-width="4" stroke-linecap="round"/>
+                <path d="M24 24c0-4 4-5 4-9M32 24c0-4 4-5 4-9" fill="none" stroke="#fff7ec" stroke-width="3" stroke-linecap="round"/>
+            `;
+        case "leaf":
+            return `
+                <path d="M23 46c17 1 24-12 24-23-12 0-25 7-26 24 0 6 5 10 11 10 9 0 14-8 16-16" fill="none" stroke="#fffef8" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M24 48c7-8 13-13 22-18" fill="none" stroke="#fffef8" stroke-width="3" stroke-linecap="round"/>
+            `;
+        case "database":
+            return `
+                <ellipse cx="35" cy="26" rx="14" ry="6.5" fill="#fff9ef"/>
+                <path d="M21 26v18c0 4 6 7 14 7s14-3 14-7V26" fill="#fff9ef"/>
+                <path d="M21 35c0 4 6 7 14 7s14-3 14-7M21 44c0 4 6 7 14 7s14-3 14-7" fill="none" stroke="${accent}" stroke-width="3"/>
+            `;
+        case "atom":
+            return `
+                <circle cx="35" cy="37" r="4" fill="#fffef8"/>
+                <ellipse cx="35" cy="37" rx="16" ry="7" fill="none" stroke="#fffef8" stroke-width="3"/>
+                <ellipse cx="35" cy="37" rx="16" ry="7" fill="none" stroke="#fffef8" stroke-width="3" transform="rotate(60 35 37)"/>
+                <ellipse cx="35" cy="37" rx="16" ry="7" fill="none" stroke="#fffef8" stroke-width="3" transform="rotate(120 35 37)"/>
+            `;
+        case "whale":
+            return `
+                <rect x="19" y="25" width="9" height="7" rx="2" fill="#fffef8"/>
+                <rect x="29" y="25" width="9" height="7" rx="2" fill="#fffef8"/>
+                <rect x="39" y="25" width="9" height="7" rx="2" fill="#fffef8"/>
+                <path d="M17 41c0-7 6-13 13-13h11c8 0 12 5 12 12v4c0 2-2 4-4 4h-5l-5 6-5-6H26c-5 0-9-3-9-7z" fill="#fffef8"/>
+                <circle cx="45" cy="38" r="1.8" fill="${accent}"/>
+            `;
+        case "folder":
+            return `
+                <path d="M19 28c0-4 3-7 7-7h7l5 5h13c4 0 7 3 7 7v13c0 4-3 7-7 7H26c-4 0-7-3-7-7V28z" fill="#fffef8"/>
+                <path d="M19 32h39" stroke="${accent}" stroke-width="3" stroke-linecap="round"/>
+            `;
+        default:
+            return "";
+    }
+}
+
+function createGradeRunObstacle() {
+    const obstacleTypes = [
+        {label: "JAVA", width: 82, height: 46, lane: "ground", color: "#ffb866"},
+        {label: "SPRING", width: 98, height: 46, lane: "ground", color: state.gradeRun.theme?.mint || "#42c6ae"},
+        {label: "MYSQL", width: 92, height: 44, lane: "ground", color: state.gradeRun.theme?.gold || "#f7ca63"},
+        {label: "REACT", width: 90, height: 40, lane: "air-mid", color: "#67d6ef"},
+        {label: "DOCKER", width: 100, height: 40, lane: "air-mid", color: "#72b7ff"},
+        {label: "JPA", width: 76, height: 36, lane: "air-high", color: state.gradeRun.theme?.coral || "#ff8d73"}
+    ];
+    const type = obstacleTypes[Math.floor(Math.random() * obstacleTypes.length)];
+
+    return {
+        ...type,
+        x: state.gradeRun.canvasWidth + 12 + Math.random() * 42,
+        y: resolveGradeRunObstacleY(type)
+    };
+}
+
+function getRandomGradeRunSpawnDelay(speed) {
+    return Math.max(540, 1260 - speed * 980 + Math.random() * 260);
+}
+
+function checkGradeRunCollision(player, obstacle) {
+    const inset = 7;
+
+    return (
+        player.x + inset < obstacle.x + obstacle.width - 4 &&
+        player.x + player.width - inset > obstacle.x + 4 &&
+        player.y + inset < obstacle.y + obstacle.height - 4 &&
+        player.y + player.height - inset > obstacle.y + 4
+    );
+}
+
+function renderGradeRunGame() {
+    if (!elements.gradeRunCanvas) {
+        return;
+    }
+
+    elements.gradeRunScore.textContent = String(state.gradeRun.score);
+    elements.gradeRunStatus.textContent = state.gradeRun.status;
+    updateGradeRunControls();
+
+    const context = elements.gradeRunCanvas.getContext("2d");
+    if (!context) {
+        return;
+    }
+
+    drawGradeRunScene(context);
+}
+
+function updateGradeRunControls() {
+    if (!elements.gradeRunStartButton || !elements.gradeRunPauseButton) {
+        return;
+    }
+
+    elements.gradeRunStartButton.disabled = state.gradeRun.running;
+    elements.gradeRunPauseButton.textContent = state.gradeRun.running ? "일시정지" : "계속하기";
+    elements.gradeRunPauseButton.disabled = !state.gradeRun.started || state.gradeRun.gameOver;
+    if (elements.gradeRunShareButton) {
+        elements.gradeRunShareButton.disabled = !state.connected || state.gradeRun.score <= 0;
+    }
+}
+
+function drawGradeRunCloudBlock(context, obstacle) {
+    context.fillStyle = "rgba(255, 255, 255, 0.26)";
+    context.beginPath();
+    context.arc(obstacle.x + 12, obstacle.y + 12, 12, 0, Math.PI * 2);
+    context.arc(obstacle.x + obstacle.width / 2, obstacle.y + 10, 15, 0, Math.PI * 2);
+    context.arc(obstacle.x + obstacle.width - 14, obstacle.y + 13, 12, 0, Math.PI * 2);
+    context.fill();
+}
+
+function drawGradeRunScene(context) {
+    const {canvasWidth, canvasHeight, groundY, player, obstacles, score, bestScore, speed} = state.gradeRun;
+    const theme = state.gradeRun.theme || readBreakoutTheme();
+
+    context.clearRect(0, 0, canvasWidth, canvasHeight);
+
+    const sky = context.createLinearGradient(0, 0, 0, canvasHeight);
+    sky.addColorStop(0, "rgba(159, 228, 255, 0.98)");
+    sky.addColorStop(0.56, "rgba(145, 232, 220, 0.96)");
+    sky.addColorStop(1, "rgba(191, 243, 255, 0.98)");
+    context.fillStyle = sky;
+    context.fillRect(0, 0, canvasWidth, canvasHeight);
+
+    context.fillStyle = "rgba(64, 184, 208, 0.24)";
+    context.fillRect(0, groundY - 66, canvasWidth, 64);
+    context.fillStyle = "rgba(242, 198, 109, 0.95)";
+    context.fillRect(0, groundY, canvasWidth, canvasHeight - groundY);
+    context.fillStyle = "rgba(255, 255, 255, 0.78)";
+    context.fillRect(0, groundY - 8, canvasWidth, 8);
+
+    drawGradeRunHud(context, score, bestScore, speed);
+
+    obstacles.forEach((obstacle) => {
+        if (obstacle.lane !== "ground") {
+            drawGradeRunCloudBlock(context, obstacle);
+        }
+
+        drawRoundedRect(
+            context,
+            obstacle.x,
+            obstacle.y,
+            obstacle.width,
+            obstacle.height,
+            obstacle.lane === "ground" ? 10 : 14,
+            obstacle.color,
+            "rgba(79, 55, 35, 0.14)"
+        );
+
+        if (obstacle.lane !== "ground") {
+            context.strokeStyle = "rgba(255, 255, 255, 0.56)";
+            context.lineWidth = 2;
+            context.beginPath();
+            context.roundRect(obstacle.x + 4, obstacle.y + 4, obstacle.width - 8, obstacle.height - 8, 10);
+            context.stroke();
+        }
+
+        context.fillStyle = "#2f2219";
+        context.font = obstacle.label.length >= 6 ? '900 15px "Jua"' : '900 18px "Jua"';
+        context.textAlign = "center";
+        context.textBaseline = "middle";
+        context.fillText(obstacle.label, obstacle.x + obstacle.width / 2, obstacle.y + obstacle.height / 2 + 1);
+    });
+
+    if (player) {
+        drawGradeRunPlayer(context, player, theme);
+    }
+}
+
+function drawGradeRunHud(context, score, bestScore, speed) {
+    context.fillStyle = "rgba(255, 251, 241, 0.88)";
+    context.strokeStyle = "rgba(79, 55, 35, 0.12)";
+    context.lineWidth = 2;
+    context.beginPath();
+    context.roundRect(16, 14, 164, 58, 18);
+    context.fill();
+    context.stroke();
+
+    context.fillStyle = "#6c5a4d";
+    context.font = '900 16px "Jua"';
+    context.textAlign = "left";
+    context.fillText(`점수 ${score}`, 30, 38);
+    context.fillText(`최고 ${bestScore}`, 30, 60);
+    context.fillText(`속도 ${speed.toFixed(2)}`, 110, 60);
+}
+
+function drawGradeRunPlayer(context, player, theme) {
+    const headRadius = 14;
+    const headCenterX = player.x + player.width / 2;
+    const headCenterY = player.y + 14;
+
+    context.fillStyle = "#ffe3c0";
+    context.beginPath();
+    context.arc(headCenterX, headCenterY, headRadius, 0, Math.PI * 2);
+    context.fill();
+
+    drawRoundedRect(
+        context,
+        player.x + 4,
+        player.y + 26,
+        player.width - 8,
+        player.height - 26,
+        10,
+        theme.teal,
+        "rgba(79, 55, 35, 0.14)"
+    );
+
+    context.strokeStyle = "#3e2d20";
+    context.lineWidth = 4;
+    context.lineCap = "round";
+
+    context.beginPath();
+    context.moveTo(player.x + 12, player.y + player.height - 8);
+    context.lineTo(player.x + 8, player.y + player.height + 8);
+    context.moveTo(player.x + player.width - 12, player.y + player.height - 8);
+    context.lineTo(player.x + player.width - 8, player.y + player.height + 8);
+    context.stroke();
+
+    context.beginPath();
+    context.moveTo(player.x + 10, player.y + 40);
+    context.lineTo(player.x - 2, player.y + 50);
+    context.moveTo(player.x + player.width - 10, player.y + 40);
+    context.lineTo(player.x + player.width + 2, player.y + 32);
+    context.stroke();
+
+    context.fillStyle = "#3e2d20";
+    context.beginPath();
+    context.arc(headCenterX - 5, headCenterY - 2, 1.8, 0, Math.PI * 2);
+    context.arc(headCenterX + 5, headCenterY - 2, 1.8, 0, Math.PI * 2);
+    context.fill();
 }
 
 function initializeBreakoutGame() {
@@ -1299,6 +1997,9 @@ function renderBreakoutGame() {
     elements.breakoutScore.textContent = String(state.breakout.score);
     elements.breakoutStatus.textContent = state.breakout.status;
     updateBreakoutControls();
+    if (elements.breakoutShareButton) {
+        elements.breakoutShareButton.disabled = !state.connected || state.breakout.score <= 0;
+    }
 
     const context = elements.breakoutCanvas.getContext("2d");
     if (!context) {
@@ -1570,6 +2271,11 @@ function appendChatMessage(message) {
     if (!message || message.type === "SYSTEM") {
         return;
     }
+    if (shouldSkipAnnouncementMessage(message)) {
+        state.lastAnnouncementSignature = null;
+        state.lastAnnouncementAt = 0;
+        return;
+    }
     clearEmptyChatIfNeeded();
     elements.chatMessages.append(buildChatRow(message));
     elements.chatMessages.scrollTop = elements.chatMessages.scrollHeight;
@@ -1597,6 +2303,22 @@ function renderChatHistory(messages) {
 }
 
 function buildChatRow(message) {
+    if (message.type === "ANNOUNCEMENT") {
+        const row = document.createElement("article");
+        row.className = "chat-row system";
+
+        const wrap = document.createElement("div");
+        wrap.className = "chat-bubble-wrap";
+
+        const bubble = document.createElement("div");
+        bubble.className = "chat-bubble";
+        bubble.textContent = message.content;
+
+        wrap.append(bubble);
+        row.append(wrap);
+        return row;
+    }
+
     const isMine = state.me && message.nickname === state.me.nickname;
     const row = document.createElement("article");
     row.className = `chat-row ${isMine ? "me" : "other"}`;
@@ -1843,6 +2565,7 @@ function showAuthSection() {
     closeOnlineUsersModal();
     closeGame2048Modal();
     closeBreakoutModalHandler();
+    closeGradeRunModalHandler();
     elements.authSection.classList.remove("hidden");
     elements.appSection.classList.add("hidden");
 }
@@ -1976,5 +2699,3 @@ function escapeHtml(value) {
         .replaceAll("\"", "&quot;")
         .replaceAll("'", "&#39;");
 }
-
-

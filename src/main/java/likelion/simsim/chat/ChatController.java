@@ -2,6 +2,7 @@ package likelion.simsim.chat;
 
 import likelion.simsim.auth.SessionService;
 import likelion.simsim.auth.model.SessionInfo;
+import likelion.simsim.chat.dto.ChatAnnouncementRequest;
 import likelion.simsim.chat.dto.ChatMessageRequest;
 import likelion.simsim.common.AuthConstants;
 import likelion.simsim.common.exception.UnauthorizedException;
@@ -12,9 +13,6 @@ import org.springframework.util.StringUtils;
 
 import java.util.Map;
 
-/**
- * 전체 익명 채팅방 메시지 발행을 처리합니다.
- */
 @Controller
 public class ChatController {
 
@@ -28,9 +26,16 @@ public class ChatController {
 
     @MessageMapping("/chat.send")
     public void send(ChatMessageRequest request, SimpMessageHeaderAccessor headerAccessor) {
-        String sessionToken = resolveSessionToken(headerAccessor);
-        SessionInfo sessionInfo = sessionService.requireSession(sessionToken);
+        SessionInfo sessionInfo = sessionService.requireSession(resolveSessionToken(headerAccessor));
         chatService.sendChat(sessionInfo.nickname(), sessionInfo.school(), request.content());
+    }
+
+    @MessageMapping("/chat.announce")
+    public void announce(ChatAnnouncementRequest request, SimpMessageHeaderAccessor headerAccessor) {
+        SessionInfo sessionInfo = sessionService.requireSession(resolveSessionToken(headerAccessor));
+        int score = request == null || request.score() == null ? 0 : request.score();
+        String gameName = request == null ? null : request.gameName();
+        chatService.sendAnnouncement(sessionInfo.nickname(), gameName, score);
     }
 
     private String resolveSessionToken(SimpMessageHeaderAccessor headerAccessor) {

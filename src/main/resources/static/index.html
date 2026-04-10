@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
@@ -34,6 +34,7 @@
         <div class="top-status">
             <button type="button" class="feedback-link-button game-link-button" id="game2048Button">2048 게임 하기</button>
             <button type="button" class="feedback-link-button game-link-button" id="breakoutButton">벽돌깨기 하기</button>
+            <button type="button" class="feedback-link-button game-link-button" id="gradeRunButton">개발 피하기</button>
             <a href="/feedback.html" class="feedback-link-button">피드백 제공</a>
             <button type="button" class="stat-pill stat-pill--button" id="onlineUsersButton">
                 <span class="stat-pill__label">현재 접속</span>
@@ -215,6 +216,7 @@
                     <p class="modal-description">채팅방에 그대로 머무른 채 방향키나 스와이프로 플레이할 수 있습니다.</p>
                 </div>
                 <div class="game-modal-actions">
+                    <button type="button" class="ghost-btn" id="share2048Button">채팅방에 공유하기</button>
                     <button type="button" class="ghost-btn" id="restart2048Button">다시 시작</button>
                     <button type="button" class="ghost-btn modal-close" id="closeGame2048Modal">닫기</button>
                 </div>
@@ -245,7 +247,7 @@
                 <div class="breakout-modal-actions">
                     <button type="button" class="ghost-btn" id="breakoutStartButton">게임 시작</button>
                     <button type="button" class="ghost-btn" id="breakoutPauseButton">일시정지</button>
-                    <button type="button" class="ghost-btn" id="breakoutRestartButton">다시 시작</button>
+                    <button type="button" class="ghost-btn" id="breakoutShareButton">채팅방에 공유하기</button>
                     <button type="button" class="ghost-btn modal-close" id="closeBreakoutModal">닫기</button>
                 </div>
             </div>
@@ -263,6 +265,39 @@
             </div>
 
             <p class="breakout-guide">조작: 좌우 방향키로 패들을 움직입니다. 팝업을 닫아도 현재 상태는 유지됩니다.</p>
+        </div>
+    </div>
+
+    <div id="gradeRunModal" class="modal hidden">
+        <div class="modal-backdrop" id="gradeRunBackdrop"></div>
+        <div class="modal-card grade-run-modal-card" role="dialog" aria-modal="true" aria-labelledby="gradeRunTitle">
+            <div class="modal-header grade-run-modal-header">
+                <div>
+                    <h2 id="gradeRunTitle">개발 피하기</h2>
+                    <p class="modal-description">학생이 오른쪽으로 달리며 개발 키워드 블록을 점프로 피하는 러너 게임입니다.</p>
+                </div>
+                <div class="grade-run-modal-actions">
+                    <button type="button" class="ghost-btn" id="gradeRunStartButton">게임 시작</button>
+                    <button type="button" class="ghost-btn" id="gradeRunPauseButton">일시정지</button>
+                    <button type="button" class="ghost-btn" id="gradeRunShareButton">채팅방에 공유하기</button>
+                    <button type="button" class="ghost-btn" id="gradeRunRestartButton">다시 시작</button>
+                    <button type="button" class="ghost-btn modal-close" id="closeGradeRunModal">닫기</button>
+                </div>
+            </div>
+
+            <div class="grade-run-summary">
+                <div class="grade-run-score-box">
+                    <span>현재 점수</span>
+                    <strong id="gradeRunScore">0</strong>
+                </div>
+                <p id="gradeRunStatus" class="grade-run-status">게임 시작을 누른 뒤 스페이스, 위 방향키, 클릭, 터치로 점프하세요.</p>
+            </div>
+
+            <div class="grade-run-canvas-shell">
+                <canvas id="gradeRunCanvas" class="grade-run-canvas" width="620" height="300" aria-label="개발 피하기 게임 화면"></canvas>
+            </div>
+
+            <p class="grade-run-guide">조작: 스페이스, 위 방향키, 마우스 클릭, 터치로 점프합니다. 팝업을 닫아도 현재 상태는 유지됩니다.</p>
         </div>
     </div>
 

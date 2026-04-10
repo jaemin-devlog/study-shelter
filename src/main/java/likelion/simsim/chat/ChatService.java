@@ -11,16 +11,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.util.HtmlUtils;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * 채팅 메시지 검증과 브로드캐스트를 담당합니다.
- */
 @Service
 public class ChatService {
 
     private static final String CHAT_TYPE = "CHAT";
+    private static final String ANNOUNCEMENT_TYPE = "ANNOUNCEMENT";
     private static final int MAX_CHAT_LENGTH = 200;
     private static final int MAX_CHAT_HISTORY_SIZE = 100;
 
@@ -43,9 +42,24 @@ public class ChatService {
         messagingTemplate.convertAndSend("/topic/chat", message);
     }
 
+    public void sendAnnouncement(String nickname, String gameName, int score) {
+        if (score < 0) {
+            throw new BadRequestException("점수는 0점 이상이어야 합니다.");
+        }
+
+        String normalizedGameName = normalizeAnnouncementGameName(gameName);
+        String escapedNickname = HtmlUtils.htmlEscape(nickname);
+        String escapedGameName = HtmlUtils.htmlEscape(normalizedGameName);
+        String content = escapedNickname + "님이 " + escapedGameName + "에서 " + score + "점을 달성하였습니다!";
+
+        ChatMessageResponse message = ChatMessageResponse.announcement(content);
+        saveRecentMessage(message);
+        messagingTemplate.convertAndSend("/topic/chat", message);
+    }
+
     public RecentChatResponse getRecentMessages() {
-        List<ChatMessageEntity> entities = chatMessageRepository.findAllByTypeOrderBySentAtDesc(
-                CHAT_TYPE,
+        List<ChatMessageEntity> entities = chatMessageRepository.findAllByTypeInOrderBySentAtDesc(
+                Arrays.asList(CHAT_TYPE, ANNOUNCEMENT_TYPE),
                 PageRequest.of(0, MAX_CHAT_HISTORY_SIZE)
         );
         List<ChatMessageResponse> messages = new ArrayList<>();
@@ -74,9 +88,20 @@ public class ChatService {
             throw new BadRequestException("채팅 내용은 비어 있을 수 없습니다.");
         }
         if (content.length() > MAX_CHAT_LENGTH) {
-            throw new BadRequestException("채팅은 200자 이하로 입력하세요.");
+            throw new BadRequestException("채팅은 200자 이하로 입력해 주세요.");
         }
         return content;
+    }
+
+    private String normalizeAnnouncementGameName(String rawGameName) {
+        String gameName = rawGameName == null ? "" : rawGameName.trim();
+        if (gameName.isBlank()) {
+            throw new BadRequestException("게임 이름이 필요합니다.");
+        }
+        if (gameName.length() > 30) {
+            throw new BadRequestException("게임 이름이 너무 깁니다.");
+        }
+        return gameName;
     }
 
     private void saveRecentMessage(ChatMessageResponse message) {
