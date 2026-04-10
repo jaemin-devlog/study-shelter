@@ -1,8 +1,12 @@
 package likelion.simsim.ranking;
 
+import likelion.simsim.auth.entity.UserEntity;
+import likelion.simsim.auth.repository.UserRepository;
 import likelion.simsim.auth.SessionService;
 import likelion.simsim.auth.model.SessionInfo;
 import likelion.simsim.common.RedisKeys;
+import likelion.simsim.ranking.dto.MemberDirectoryEntryResponse;
+import likelion.simsim.ranking.dto.MemberDirectoryResponse;
 import likelion.simsim.ranking.dto.RankingEntryResponse;
 import likelion.simsim.ranking.dto.RankingResponse;
 import likelion.simsim.ranking.dto.UserRankingSummaryResponse;
@@ -31,15 +35,18 @@ public class RankingService {
 
     private final StringRedisTemplate stringRedisTemplate;
     private final SessionService sessionService;
+    private final UserRepository userRepository;
     private final UserRankingStatRepository userRankingStatRepository;
 
     public RankingService(
             StringRedisTemplate stringRedisTemplate,
             SessionService sessionService,
+            UserRepository userRepository,
             UserRankingStatRepository userRankingStatRepository
     ) {
         this.stringRedisTemplate = stringRedisTemplate;
         this.sessionService = sessionService;
+        this.userRepository = userRepository;
         this.userRankingStatRepository = userRankingStatRepository;
     }
 
@@ -123,6 +130,40 @@ public class RankingService {
         return new UserRankingSummaryResponse(0L, 0, false, now);
     }
 
+    @Transactional(readOnly = true)
+    public MemberDirectoryResponse getMemberDirectory(int page, int size) {
+        long now = System.currentTimeMillis();
+        List<RankingCandidate> candidates = buildCandidates(now);
+
+        int safeSize = Math.max(1, size);
+        int totalElements = candidates.size();
+        int totalPages = Math.max(1, (int) Math.ceil((double) totalElements / safeSize));
+        int safePage = Math.min(Math.max(0, page), Math.max(0, totalPages - 1));
+        int fromIndex = Math.min(safePage * safeSize, totalElements);
+        int toIndex = Math.min(fromIndex + safeSize, totalElements);
+
+        List<MemberDirectoryEntryResponse> members = new ArrayList<>();
+        for (int index = fromIndex; index < toIndex; index++) {
+            RankingCandidate candidate = candidates.get(index);
+            members.add(new MemberDirectoryEntryResponse(
+                    index + 1,
+                    candidate.nickname(),
+                    candidate.school(),
+                    candidate.totalConnectedSeconds(),
+                    candidate.online()
+            ));
+        }
+
+        return new MemberDirectoryResponse(
+                members,
+                safePage,
+                safeSize,
+                totalPages,
+                totalElements,
+                now
+        );
+    }
+
     private List<RankingCandidate> buildCandidates(long now) {
         Map<String, LiveSessionSnapshot> activeSessions = loadActiveSessions(now);
 
@@ -135,6 +176,19 @@ public class RankingService {
             knownNicknames.add(storedStat.getNickname());
         }
 
+        for (UserEntity user : userRepository.findAll()) {
+            if (!knownNicknames.contains(user.getNickname())) {
+                storedStats.add(new UserRankingStatEntity(
+                        user.getNickname(),
+                        user.getSchool(),
+                        0L,
+                        user.getCreatedAt(),
+                        user.getCreatedAt()
+                ));
+                knownNicknames.add(user.getNickname());
+            }
+        }
+
         for (LiveSessionSnapshot activeSession : activeSessions.values()) {
             if (!knownNicknames.contains(activeSession.nickname())) {
                 storedStats.add(new UserRankingStatEntity(
@@ -144,6 +198,7 @@ public class RankingService {
                         now,
                         now
                 ));
+                knownNicknames.add(activeSession.nickname());
             }
         }
 

@@ -36,6 +36,10 @@
             <button type="button" class="feedback-link-button game-link-button" id="breakoutButton">벽돌깨기 하기</button>
             <button type="button" class="feedback-link-button game-link-button" id="gradeRunButton">개발 피하기</button>
             <a href="/feedback.html" class="feedback-link-button">피드백 제공</a>
+            <button type="button" class="stat-pill stat-pill--button" id="memberDirectoryButton">
+                <span class="stat-pill__label">전체 회원</span>
+                <strong id="memberDirectoryCount">0명</strong>
+            </button>
             <button type="button" class="stat-pill stat-pill--button" id="onlineUsersButton">
                 <span class="stat-pill__label">현재 접속</span>
                 <strong id="onlineCount">0명</strong>
@@ -204,6 +208,32 @@
                 <button type="button" class="ghost-btn modal-close" id="closeOnlineUsersModal">닫기</button>
             </div>
             <ul id="onlineUsersList" class="online-users-list"></ul>
+        </div>
+    </div>
+
+    <div id="memberDirectoryModal" class="modal hidden">
+        <div class="modal-backdrop" id="memberDirectoryBackdrop"></div>
+        <div class="modal-card member-directory-modal-card" role="dialog" aria-modal="true" aria-labelledby="memberDirectoryTitle">
+            <div class="modal-header">
+                <div>
+                    <h2 id="memberDirectoryTitle">전체 가입자 명단</h2>
+                    <p class="modal-description">가입된 전체 인원을 누적 시간 순으로 확인할 수 있습니다.</p>
+                </div>
+                <button type="button" class="ghost-btn modal-close" id="closeMemberDirectoryModal">닫기</button>
+            </div>
+
+            <div class="member-directory-summary">
+                <span id="memberDirectorySummaryText">총 0명</span>
+                <span>정렬 기준: 머문 시간 높은 순</span>
+            </div>
+
+            <ul id="memberDirectoryList" class="member-directory-list"></ul>
+
+            <div class="member-directory-pagination">
+                <button type="button" class="ghost-btn" id="memberDirectoryPrevButton">이전</button>
+                <span id="memberDirectoryPageText">1 / 1</span>
+                <button type="button" class="ghost-btn" id="memberDirectoryNextButton">다음</button>
+            </div>
         </div>
     </div>
 

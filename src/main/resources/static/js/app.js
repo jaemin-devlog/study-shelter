@@ -16,6 +16,12 @@ const state = {
     lastAnnouncementAt: 0,
     rankingItems: [],
     onlineCount: 0,
+    memberDirectory: {
+        currentPage: 0,
+        totalPages: 1,
+        totalElements: 0,
+        pageSize: 15
+    },
     game2048: {
         board: [],
         score: 0,
@@ -130,6 +136,16 @@ const elements = {
     onlineUsersBackdrop: document.getElementById("onlineUsersBackdrop"),
     onlineUsersList: document.getElementById("onlineUsersList"),
     closeOnlineUsersModal: document.getElementById("closeOnlineUsersModal"),
+    memberDirectoryButton: document.getElementById("memberDirectoryButton"),
+    memberDirectoryCount: document.getElementById("memberDirectoryCount"),
+    memberDirectoryModal: document.getElementById("memberDirectoryModal"),
+    memberDirectoryBackdrop: document.getElementById("memberDirectoryBackdrop"),
+    memberDirectoryList: document.getElementById("memberDirectoryList"),
+    closeMemberDirectoryModal: document.getElementById("closeMemberDirectoryModal"),
+    memberDirectoryPrevButton: document.getElementById("memberDirectoryPrevButton"),
+    memberDirectoryNextButton: document.getElementById("memberDirectoryNextButton"),
+    memberDirectoryPageText: document.getElementById("memberDirectoryPageText"),
+    memberDirectorySummaryText: document.getElementById("memberDirectorySummaryText"),
     onlineCount: document.getElementById("onlineCount"),
     presenceToast: document.getElementById("presenceToast"),
     connectionStatus: document.getElementById("connectionStatus"),
@@ -199,6 +215,11 @@ function bindEvents() {
     elements.onlineUsersButton?.addEventListener("click", openOnlineUsersModal);
     elements.closeOnlineUsersModal?.addEventListener("click", closeOnlineUsersModal);
     elements.onlineUsersBackdrop?.addEventListener("click", closeOnlineUsersModal);
+    elements.memberDirectoryButton?.addEventListener("click", openMemberDirectoryModal);
+    elements.closeMemberDirectoryModal?.addEventListener("click", closeMemberDirectoryModal);
+    elements.memberDirectoryBackdrop?.addEventListener("click", closeMemberDirectoryModal);
+    elements.memberDirectoryPrevButton?.addEventListener("click", handleMemberDirectoryPrevPage);
+    elements.memberDirectoryNextButton?.addEventListener("click", handleMemberDirectoryNextPage);
     document.addEventListener("keydown", handleGlobalKeydown);
     document.addEventListener("keyup", handleGlobalKeyup);
     window.addEventListener("resize", handleViewportResize, {passive: true});
@@ -504,15 +525,17 @@ function handleGradeRunShareButton() {
 
 async function loadPublicSnapshots() {
     try {
-        const [countResponse, rankingResponse, chatResponse] = await Promise.all([
+        const [countResponse, rankingResponse, chatResponse, membersResponse] = await Promise.all([
             apiRequest("/api/presence/count"),
             apiRequest("/api/ranking/top10"),
-            apiRequest("/api/chat/recent")
+            apiRequest("/api/chat/recent"),
+            apiRequest("/api/ranking/members?page=0")
         ]);
 
         updateOnlineCount(countResponse.data.count);
         renderRanking(rankingResponse.data.rankings || [], rankingResponse.data.updatedAt);
         renderChatHistory(chatResponse.data.messages || []);
+        updateMemberDirectoryCount(membersResponse.data.totalElements);
     } catch (error) {
         console.error(error);
     }
@@ -712,6 +735,7 @@ async function handleUnexpectedDisconnect(message) {
 }
 
 async function openOnlineUsersModal() {
+    closeMemberDirectoryModal();
     elements.onlineUsersModal?.classList.remove("hidden");
     await loadOnlineUsers();
 }
@@ -720,9 +744,23 @@ function closeOnlineUsersModal() {
     elements.onlineUsersModal?.classList.add("hidden");
 }
 
+async function openMemberDirectoryModal() {
+    closeOnlineUsersModal();
+    closeGame2048Modal();
+    closeBreakoutModalHandler();
+    closeGradeRunModalHandler();
+    elements.memberDirectoryModal?.classList.remove("hidden");
+    await loadMemberDirectoryPage(0);
+}
+
+function closeMemberDirectoryModal() {
+    elements.memberDirectoryModal?.classList.add("hidden");
+}
+
 function handleGlobalKeydown(event) {
     if (event.key === "Escape") {
         closeOnlineUsersModal();
+        closeMemberDirectoryModal();
         closeGame2048Modal();
         closeBreakoutModalHandler();
         closeGradeRunModalHandler();
@@ -801,6 +839,7 @@ function openGame2048Modal() {
     }
 
     closeOnlineUsersModal();
+    closeMemberDirectoryModal();
     closeBreakoutModalHandler();
 
     if (!state.game2048.initialized) {
@@ -824,6 +863,7 @@ function openBreakoutModal() {
     }
 
     closeOnlineUsersModal();
+    closeMemberDirectoryModal();
     closeGame2048Modal();
 
     if (!state.breakout.initialized) {
@@ -863,6 +903,7 @@ function openGradeRunModal() {
     }
 
     closeOnlineUsersModal();
+    closeMemberDirectoryModal();
     closeGame2048Modal();
     closeBreakoutModalHandler();
 
@@ -2273,6 +2314,86 @@ function renderOnlineUsers(users) {
     elements.onlineUsersList.replaceChildren(fragment);
 }
 
+async function loadMemberDirectoryPage(page) {
+    const safePage = Math.max(0, Number(page) || 0);
+
+    try {
+        const response = await apiRequest(`/api/ranking/members?page=${safePage}`);
+        renderMemberDirectory(response.data);
+    } catch (error) {
+        renderMemberDirectory(null);
+        showToast(error.message);
+    }
+}
+
+function renderMemberDirectory(payload) {
+    if (!elements.memberDirectoryList) {
+        return;
+    }
+
+    const members = Array.isArray(payload?.members) ? payload.members : [];
+    const page = Number(payload?.page) || 0;
+    const totalPages = Math.max(1, Number(payload?.totalPages) || 1);
+    const totalElements = Math.max(0, Number(payload?.totalElements) || 0);
+
+    state.memberDirectory.currentPage = page;
+    state.memberDirectory.totalPages = totalPages;
+    state.memberDirectory.totalElements = totalElements;
+
+    updateMemberDirectoryCount(totalElements);
+    if (elements.memberDirectorySummaryText) {
+        elements.memberDirectorySummaryText.textContent = `총 ${totalElements}명 · 페이지당 15명`;
+    }
+    if (elements.memberDirectoryPageText) {
+        elements.memberDirectoryPageText.textContent = `${page + 1} / ${totalPages}`;
+    }
+    if (elements.memberDirectoryPrevButton) {
+        elements.memberDirectoryPrevButton.disabled = page <= 0;
+    }
+    if (elements.memberDirectoryNextButton) {
+        elements.memberDirectoryNextButton.disabled = page >= totalPages - 1;
+    }
+
+    if (members.length === 0) {
+        elements.memberDirectoryList.innerHTML = `
+            <li class="empty-box member-directory-empty">표시할 가입자 정보가 없습니다.</li>
+        `;
+        return;
+    }
+
+    const fragment = document.createDocumentFragment();
+
+    members.forEach((member) => {
+        const item = document.createElement("li");
+        item.className = "member-directory-item";
+        item.innerHTML = `
+            <span class="member-directory-rank">${member.rank}</span>
+            <strong class="member-directory-name">${escapeHtml(member.nickname)}</strong>
+            <span class="member-directory-school">${escapeHtml(member.school)}</span>
+            <span class="member-directory-time">${formatDurationFromSeconds(member.totalConnectedSeconds)}</span>
+        `;
+        fragment.append(item);
+    });
+
+    elements.memberDirectoryList.replaceChildren(fragment);
+}
+
+function handleMemberDirectoryPrevPage() {
+    if (state.memberDirectory.currentPage <= 0) {
+        return;
+    }
+
+    loadMemberDirectoryPage(state.memberDirectory.currentPage - 1);
+}
+
+function handleMemberDirectoryNextPage() {
+    if (state.memberDirectory.currentPage >= state.memberDirectory.totalPages - 1) {
+        return;
+    }
+
+    loadMemberDirectoryPage(state.memberDirectory.currentPage + 1);
+}
+
 function renderMyInfo() {
     elements.myNickname.textContent = state.me?.nickname || "-";
     elements.mySchool.textContent = state.me?.school || "-";
@@ -2551,6 +2672,14 @@ function updateOnlineCount(count) {
     elements.onlineCount.textContent = `${count}명`;
 }
 
+function updateMemberDirectoryCount(count) {
+    if (!elements.memberDirectoryCount) {
+        return;
+    }
+
+    elements.memberDirectoryCount.textContent = `${Math.max(0, Number(count) || 0)}명`;
+}
+
 function handlePresenceNotice(payload) {
     if (!payload || !payload.nickname) {
         return;
@@ -2581,6 +2710,7 @@ function setConnectionStatus(text, mode) {
 
 function showAuthSection() {
     closeOnlineUsersModal();
+    closeMemberDirectoryModal();
     closeGame2048Modal();
     closeBreakoutModalHandler();
     closeGradeRunModalHandler();
