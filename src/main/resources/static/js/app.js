@@ -1530,13 +1530,31 @@ function getGradeRunSpriteIconMarkup(icon, accent) {
 
 function createGradeRunObstacle() {
     const obstacleTypes = [
-        {label: "JAVA", width: 82, height: 46, lane: "ground", color: "#ffb866"},
-        {label: "SPRING", width: 98, height: 46, lane: "ground", color: state.gradeRun.theme?.mint || "#42c6ae"},
-        {label: "MYSQL", width: 92, height: 44, lane: "ground", color: state.gradeRun.theme?.gold || "#f7ca63"},
-        {label: "REACT", width: 90, height: 40, lane: "air-mid", color: "#67d6ef"},
-        {label: "DOCKER", width: 100, height: 40, lane: "air-mid", color: "#72b7ff"},
-        {label: "JPA", width: 76, height: 36, lane: "air-high", color: state.gradeRun.theme?.coral || "#ff8d73"}
-    ];
+        {label: "JAVA", lane: "ground", color: "#ffb866"},
+        {label: "SPRING", lane: "ground", color: state.gradeRun.theme?.mint || "#42c6ae"},
+        {label: "MYSQL", lane: "ground", color: state.gradeRun.theme?.gold || "#f7ca63"},
+        {label: "REACT", lane: "air-mid", color: "#67d6ef"},
+        {label: "DOCKER", lane: "air-mid", color: "#72b7ff"},
+        {label: "JPA", lane: "air-high", color: state.gradeRun.theme?.coral || "#ff8d73"},
+        {label: "NODE", lane: "ground", color: "#8ed081"},
+        {label: "REDIS", lane: "air-mid", color: "#ff7f6a"},
+        {label: "KOTLIN", lane: "ground", color: "#b28dff"},
+        {label: "PYTHON", lane: "air-high", color: "#ffd56e"},
+        {label: "API", lane: "ground", color: "#7fd7e6"},
+        {label: "AWS", lane: "air-mid", color: "#ffb25c"},
+        {label: "GIT", lane: "ground", color: "#ff8d73"},
+        {label: "HTML", lane: "air-high", color: "#f7a15f"},
+        {label: "CSS", lane: "air-mid", color: "#79b7ff"},
+        {label: "TYPESCRIPT", lane: "ground", color: "#7eb3ff"},
+        {label: "NEXTJS", lane: "air-mid", color: "#d6d6d6"},
+        {label: "JWT", lane: "air-high", color: "#ff98b5"},
+        {label: "LINUX", lane: "ground", color: "#c4a47a"},
+        {label: "MONGODB", lane: "air-mid", color: "#6fca8c"}
+    ].map((type) => ({
+        ...type,
+        width: Math.min(168, Math.max(76, type.label.length * 13 + 24)),
+        height: type.lane === "ground" ? 46 : type.lane === "air-mid" ? 40 : 36
+    }));
     const type = obstacleTypes[Math.floor(Math.random() * obstacleTypes.length)];
 
     return {
