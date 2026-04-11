@@ -107,8 +107,8 @@ public class ChatService {
     private void saveRecentMessage(ChatMessageResponse message) {
         chatMessageRepository.save(new ChatMessageEntity(
                 message.type(),
-                message.nickname(),
-                message.school(),
+                message.nickname() == null ? "" : message.nickname(),
+                message.school() == null ? "" : message.school(),
                 message.content(),
                 message.sentAt()
         ));

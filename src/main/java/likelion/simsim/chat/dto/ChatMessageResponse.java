@@ -16,6 +16,6 @@ public record ChatMessageResponse(
     }
 
     public static ChatMessageResponse announcement(String content) {
-        return new ChatMessageResponse("ANNOUNCEMENT", null, null, content, System.currentTimeMillis());
+        return new ChatMessageResponse("ANNOUNCEMENT", "", "", content, System.currentTimeMillis());
     }
 }
